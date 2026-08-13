@@ -817,8 +817,6 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
   const cardRef = useRef<HTMLButtonElement>(null);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    // عطّل الـ tilt على الشاشات الصغيرة
-    if (window.innerWidth < 768) return;
     const card = cardRef.current;
     if (!card) return;
     const rect = card.getBoundingClientRect();
@@ -839,65 +837,52 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={resetTilt}
       onMouseMove={handleMouseMove}
-      className="w-full max-w-full min-w-0 text-left group relative rounded-3xl overflow-hidden border border-border bg-card transition-all duration-300 hover:border-primary/40 hover:shadow-[0_8px_40px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_20px_60px_rgba(0,0,0,0.35)]"
+      className="w-full text-left group relative rounded-3xl overflow-hidden border border-border bg-card transition-all duration-300 hover:border-primary/40 hover:shadow-[0_8px_40px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_20px_60px_rgba(0,0,0,0.35)]"
       style={{
-        transform:
-          window.innerWidth >= 768
-            ? `perspective(1000px) rotateX(${tilt.y}deg) rotateY(${tilt.x}deg)`
-            : "none",
+        transform: `perspective(1000px) rotateX(${tilt.y}deg) rotateY(${tilt.x}deg)`,
         transition: hovered
           ? "transform 0.1s ease"
           : "transform 0.5s ease, box-shadow 0.3s ease, border-color 0.3s ease",
       }}
     >
       {/* Image */}
-      <div className="relative h-48 sm:h-52 overflow-hidden">
+      <div className="relative h-52 overflow-hidden">
         <img
           src={project.coverImage}
           alt={project.title}
-          className="w-full h-full max-w-full object-cover object-center transition-transform duration-700 group-hover:scale-110"
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent dark:from-black/70 dark:via-black/20" />
         <div
           className={`absolute inset-0 transition-opacity duration-500 ${hovered ? "opacity-100" : "opacity-0"}`}
-          style={{
-            background: `linear-gradient(135deg, ${project.accentColor}22 0%, transparent 60%)`,
-          }}
+          style={{ background: `linear-gradient(135deg, ${project.accentColor}22 0%, transparent 60%)` }}
         />
       </div>
 
       {/* Content */}
-      <div className="p-5 sm:p-6 min-w-0">
-        <div className="flex items-center justify-between mb-3 gap-2">
-          <span className="text-xs font-mono text-primary bg-primary/10 px-2.5 py-1 rounded-full shrink-0">
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-mono text-primary bg-primary/10 px-2.5 py-1 rounded-full">
             {project.year}
           </span>
           <ArrowUpRight
             size={18}
-            className={`text-primary shrink-0 transition-all duration-300 ${
-              hovered ? "opacity-100 translate-x-0.5 -translate-y-0.5" : "opacity-0"
-            }`}
+            className={`text-primary transition-all duration-300 ${hovered ? "opacity-100 translate-x-0.5 -translate-y-0.5" : "opacity-0"}`}
           />
         </div>
-        <h3 className="text-lg font-display font-bold text-foreground mb-1.5 group-hover:text-primary transition-colors duration-300 break-words">
+        <h3 className="text-lg font-display font-bold text-foreground mb-1.5 group-hover:text-primary transition-colors duration-300">
           {project.title}
         </h3>
-        <p className="text-xs text-muted-foreground mb-4 leading-relaxed line-clamp-2 break-words">
+        <p className="text-xs text-muted-foreground mb-4 leading-relaxed line-clamp-2">
           {project.description}
         </p>
-        <div className="text-xs text-muted-foreground font-mono break-words">
-          {project.category}
-        </div>
+        <div className="text-xs text-muted-foreground font-mono">{project.category}</div>
       </div>
 
       {/* Bottom accent bar */}
       <div
-        className={`absolute bottom-0 left-0 right-0 h-0.5 transition-all duration-500 ${
-          hovered ? "opacity-100" : "opacity-0"
-        }`}
-        style={{
-          background: `linear-gradient(90deg, transparent, ${project.accentColor}, transparent)`,
-        }}
+        className={`absolute bottom-0 left-0 right-0 h-0.5 transition-all duration-500 ${hovered ? "opacity-100" : "opacity-0"}`}
+        style={{ background: `linear-gradient(90deg, transparent, ${project.accentColor}, transparent)` }}
       />
     </button>
   );
