@@ -102,20 +102,20 @@ export default function HeroSection({ onWorkClick }: HeroSectionProps) {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.5 }}
-              className="flex flex-wrap gap-4"
+              className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto"
             >
               <button
                 onClick={onWorkClick}
-                className="group flex items-center gap-3 px-8 py-4 rounded-full bg-primary text-primary-foreground font-bold text-base hover:shadow-[0_0_40px_rgba(170,255,56,0.3)] transition-all duration-300 active:scale-95"
+                className="group flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-4 rounded-full bg-primary text-primary-foreground font-bold text-base hover:shadow-[0_0_40px_rgba(170,255,56,0.3)] transition-all duration-300 active:scale-95 text-center"
               >
-                View My Work
+                <span>View My Work</span>
                 <ArrowUpRight size={18} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </button>
               <button
                 onClick={scrollToContact}
-                className="group flex items-center gap-3 px-8 py-4 rounded-full border border-border bg-card text-foreground font-semibold text-base hover:border-primary/40 hover:bg-primary/5 transition-all duration-300 active:scale-95"
+                className="group flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-4 rounded-full border border-border bg-card text-foreground font-semibold text-base hover:border-primary/40 hover:bg-primary/5 transition-all duration-300 active:scale-95 text-center"
               >
-                Contact Me
+                <span>Contact Me</span>
                 <Mail size={18} />
               </button>
             </motion.div>
