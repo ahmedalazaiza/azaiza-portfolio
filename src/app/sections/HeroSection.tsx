@@ -93,7 +93,7 @@ export default function HeroSection({ onWorkClick }: HeroSectionProps) {
               transition={{ duration: 0.5, delay: 0.4 }}
               className="text-muted-foreground text-lg max-w-lg leading-relaxed mb-10"
             >
-              Ahmed M. Y. Al-Azaiza — Strategic Senior UX/UI Designer with 7 years of experience specializing in end-to-end product design, scalable design systems, and crafting impactful digital experiences.
+              Ahmed M. Y. Al-Azaiza — Strategic Senior UX/UI Designer with 8+ years of experience specializing in end-to-end product design, scalable design systems, and crafting impactful digital experiences.
             </motion.p>
 
             {/* Action Buttons */}
