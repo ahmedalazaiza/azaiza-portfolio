@@ -101,7 +101,7 @@ export default function ContactSection() {
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <a
-                  href="https://www.linkedin.com/in/ahmedalazaiza/"
+                  href="https://www.linkedin.com/in/ahmed-alazaiza/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-card text-xs font-semibold text-foreground hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all duration-200 group shadow-sm"
@@ -127,7 +127,7 @@ export default function ContactSection() {
                 </a>
 
                 <a
-                  href="https://www.figma.com/@ahmedalazaiza"
+                  href="https://www.figma.com/@azaiza"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-card text-xs font-semibold text-foreground hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all duration-200 group shadow-sm"

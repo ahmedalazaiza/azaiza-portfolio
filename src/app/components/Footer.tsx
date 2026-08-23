@@ -23,7 +23,7 @@ const SOCIAL_LINKS = [
         className="text-[#0A66C2] group-hover:scale-110 transition-transform"
       />
     ),
-    href: "https://www.linkedin.com/in/ahmedalazaiza/",
+    href: "https://www.linkedin.com/in/ahmed-alazaiza/",
     label: "Professional Profile",
   },
   {
@@ -45,7 +45,7 @@ const SOCIAL_LINKS = [
         className="group-hover:scale-110 transition-transform"
       />
     ),
-    href: "https://www.figma.com/@ahmedalazaiza",
+    href: "https://www.figma.com/@azaiza",
     label: "Community & Systems",
   },
 ];
