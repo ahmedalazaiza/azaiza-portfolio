@@ -4,6 +4,7 @@ import { AnimatePresence } from "motion/react";
 import CustomCursor from "./components/CustomCursor";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import ScrollToTopButton from "./components/ScrollToTopButton";
 import HomePage from "./pages/HomePage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -39,6 +40,7 @@ function AppContent({
       </AnimatePresence>
 
       {!isDashboard && <Footer />}
+      {!isDashboard && <ScrollToTopButton />}
     </div>
   );
 }
