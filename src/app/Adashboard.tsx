@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { supabase } from "../lib/supabase";
-import { ArrowLeft, Mail, Briefcase, Clock, Trash2, Check, Eye, Pencil, Plus, ExternalLink, Upload, Image as ImageIcon, X, Loader2 } from "lucide-react";
+import { ArrowLeft, Mail, Briefcase, Clock, Trash2, Check, Eye, Pencil, Plus, ExternalLink, Upload, Image as ImageIcon, X, Loader2, Search, ArrowUpRight } from "lucide-react";
 import { sortExperiences } from "./sections/TimelineSection";
 import ConfirmModal from "./components/ConfirmModal";
 
@@ -324,6 +324,107 @@ async function uploadFileToStorage(file: File, folder = "covers"): Promise<strin
   return data.publicUrl;
 }
 
+// ─── Projects Tab Presets ──────────────────────────────────────────────────
+const CATEGORY_PRESETS = [
+  "Government & Public UX",
+  "SaaS & Web Application",
+  "Mobile App (iOS / Android)",
+  "Design System & Architecture",
+  "EdTech & Interactive LMS",
+  "Real Estate & Marketplace",
+  "FinTech & Dashboard",
+  "E-Commerce & Digital Portal",
+];
+
+const ACCENT_SWATCHES = [
+  { name: "Signature Lime", hex: "#aaff38" },
+  { name: "Electric Sky", hex: "#38bdf8" },
+  { name: "Rose Pink", hex: "#f43f5e" },
+  { name: "Cosmic Purple", hex: "#a855f7" },
+  { name: "Amber Gold", hex: "#f59e0b" },
+  { name: "Emerald Tech", hex: "#10b981" },
+  { name: "Indigo Blue", hex: "#6366f1" },
+];
+
+const POPULAR_TAGS = [
+  "UX Research",
+  "Design System",
+  "Figma",
+  "Arabic RTL",
+  "Information Architecture",
+  "Mobile UX",
+  "Web App",
+  "Interactive Prototyping",
+  "Usability Testing",
+  "Design Tokens",
+  "WCAG Accessibility",
+];
+
+interface ProjectFormData {
+  title: string;
+  slug: string;
+  category: string;
+  year: string;
+  description: string;
+  full_description: string;
+  tagsList: string[];
+  accent_color: string;
+  cover_image: string;
+  imagesList: string[];
+  is_featured: boolean;
+  sort_order: number;
+}
+
+function parseProjectToForm(project?: any, projectsCount = 0): ProjectFormData {
+  if (!project) {
+    return {
+      title: "",
+      slug: "",
+      category: "SaaS & Web Application",
+      year: String(new Date().getFullYear()),
+      description: "",
+      full_description: "",
+      tagsList: ["UX Research", "Figma", "Design System"],
+      accent_color: "#aaff38",
+      cover_image: "",
+      imagesList: [],
+      is_featured: false,
+      sort_order: projectsCount + 1,
+    };
+  }
+
+  const rawTags = project.tags || "";
+  let tagsList: string[] = [];
+  if (Array.isArray(rawTags)) {
+    tagsList = rawTags.map((t: any) => String(t).trim()).filter(Boolean);
+  } else if (typeof rawTags === "string") {
+    tagsList = rawTags.split(",").map((t: string) => t.trim()).filter(Boolean);
+  }
+
+  const rawImages = project.images || "";
+  let imagesList: string[] = [];
+  if (Array.isArray(rawImages)) {
+    imagesList = rawImages.map((img: any) => String(img).trim()).filter(Boolean);
+  } else if (typeof rawImages === "string") {
+    imagesList = rawImages.split(",").map((img: string) => img.trim()).filter(Boolean);
+  }
+
+  return {
+    title: project.title || "",
+    slug: project.slug || "",
+    category: project.category || "UX/UI Design",
+    year: project.year || String(new Date().getFullYear()),
+    description: project.description || "",
+    full_description: project.full_description || "",
+    tagsList,
+    accent_color: project.accent_color || "#aaff38",
+    cover_image: project.cover_image || project.image_url || "",
+    imagesList,
+    is_featured: project.is_featured || false,
+    sort_order: project.sort_order || 1,
+  };
+}
+
 // ─── Projects Tab ────────────────────────────────────────────────────────────
 function ProjectsTab() {
   const [projects, setProjects] = useState<any[]>([]);
@@ -333,21 +434,11 @@ function ProjectsTab() {
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [tagInput, setTagInput] = useState("");
+  const [autoSlugSync, setAutoSlugSync] = useState(true);
 
-  const [form, setForm] = useState({
-    title: "",
-    slug: "",
-    category: "",
-    year: "",
-    description: "",
-    full_description: "",
-    tags: "",
-    accent_color: "#4ade80",
-    cover_image: "",
-    images: "",
-    is_featured: false,
-    sort_order: 1,
-  });
+  const [form, setForm] = useState<ProjectFormData>(parseProjectToForm());
 
   useEffect(() => {
     loadProjects();
@@ -372,42 +463,45 @@ function ProjectsTab() {
   function handleStartAdd() {
     setEditingId(null);
     setUploadError("");
-    setForm({
-      title: "",
-      slug: "",
-      category: "",
-      year: "",
-      description: "",
-      full_description: "",
-      tags: "",
-      accent_color: "#4ade80",
-      cover_image: "",
-      images: "",
-      is_featured: false,
-      sort_order: projects.length + 1,
-    });
+    setAutoSlugSync(true);
+    setTagInput("");
+    setForm(parseProjectToForm(undefined, projects.length));
     setShowForm(true);
   }
 
   function handleStartEdit(project: any) {
     setEditingId(project.id);
     setUploadError("");
-    setForm({
-      title: project.title || "",
-      slug: project.slug || "",
-      category: project.category || "",
-      year: project.year || "",
-      description: project.description || "",
-      full_description: project.full_description || "",
-      tags: project.tags || "",
-      accent_color: project.accent_color || "#4ade80",
-      cover_image: project.cover_image || project.image_url || "",
-      images: project.images || "",
-      is_featured: project.is_featured || false,
-      sort_order: project.sort_order || 1,
-    });
+    setAutoSlugSync(false);
+    setTagInput("");
+    setForm(parseProjectToForm(project));
     setShowForm(true);
   }
+
+  const handleTitleChange = (newTitle: string) => {
+    setForm(prev => {
+      const nextSlug = autoSlugSync
+        ? newTitle.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-")
+        : prev.slug;
+      return { ...prev, title: newTitle, slug: nextSlug };
+    });
+  };
+
+  const handleAddTag = (tagToAdd: string) => {
+    const trimmed = tagToAdd.trim();
+    if (!trimmed) return;
+    if (!form.tagsList.includes(trimmed)) {
+      setForm(prev => ({ ...prev, tagsList: [...prev.tagsList, trimmed] }));
+    }
+    setTagInput("");
+  };
+
+  const handleRemoveTag = (index: number) => {
+    setForm(prev => ({
+      ...prev,
+      tagsList: prev.tagsList.filter((_, i) => i !== index),
+    }));
+  };
 
   async function handleCoverFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -436,16 +530,16 @@ function ProjectsTab() {
     setUploadError("");
 
     try {
-      const fileList = Array.from(files);
-      const uploadPromises = fileList.map(file => uploadFileToStorage(file, "gallery"));
-      const newUrls = await Promise.all(uploadPromises);
+      const newUrls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const url = await uploadFileToStorage(files[i], "gallery");
+        newUrls.push(url);
+      }
 
-      const existingUrls = form.images
-        ? form.images.split(",").map(s => s.trim()).filter(Boolean)
-        : [];
-      const merged = [...existingUrls, ...newUrls].join(", ");
-
-      setForm(prev => ({ ...prev, images: merged }));
+      setForm(prev => ({
+        ...prev,
+        imagesList: [...prev.imagesList, ...newUrls],
+      }));
     } catch (err: any) {
       console.error("Gallery upload error:", err);
       setUploadError("Failed to upload images: " + (err.message || "Ensure 'portfolio' bucket exists in Supabase"));
@@ -455,16 +549,19 @@ function ProjectsTab() {
     }
   }
 
-  const [deleteModal, setDeleteModal] = useState<{ id: number; title: string } | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  function handleSetAsCover(imageUrl: string) {
+    setForm(prev => ({ ...prev, cover_image: imageUrl }));
+  }
 
   function handleRemoveGalleryImage(index: number) {
-    const currentList = form.images
-      ? form.images.split(",").map(s => s.trim()).filter(Boolean)
-      : [];
-    const updated = currentList.filter((_, i) => i !== index).join(", ");
-    setForm(prev => ({ ...prev, images: updated }));
+    setForm(prev => ({
+      ...prev,
+      imagesList: prev.imagesList.filter((_, i) => i !== index),
+    }));
   }
+
+  const [deleteModal, setDeleteModal] = useState<{ id: number; title: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleConfirmDelete() {
     if (!deleteModal) return;
@@ -482,19 +579,22 @@ function ProjectsTab() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    const computedSlug = form.slug.trim() ||
+      form.title.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-");
+
     const payload = {
-      title: form.title,
-      slug: form.slug || form.title.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-"),
-      category: form.category,
-      year: form.year,
-      description: form.description,
-      full_description: form.full_description,
-      tags: form.tags,
-      accent_color: form.accent_color,
+      title: form.title.trim(),
+      slug: computedSlug,
+      category: form.category.trim(),
+      year: form.year.trim() || String(new Date().getFullYear()),
+      description: form.description.trim(),
+      full_description: form.full_description.trim(),
+      tags: form.tagsList.join(", "),
+      accent_color: form.accent_color || "#aaff38",
       cover_image: form.cover_image,
-      images: form.images,
+      images: form.imagesList.join(", "),
       is_featured: form.is_featured,
-      sort_order: form.sort_order,
+      sort_order: form.sort_order || 1,
     };
 
     if (editingId) {
@@ -513,33 +613,32 @@ function ProjectsTab() {
 
     setShowForm(false);
     setEditingId(null);
-    setForm({
-      title: "",
-      slug: "",
-      category: "",
-      year: "",
-      description: "",
-      full_description: "",
-      tags: "",
-      accent_color: "#4ade80",
-      cover_image: "",
-      images: "",
-      is_featured: false,
-      sort_order: 1,
-    });
+    setForm(parseProjectToForm());
     loadProjects();
   }
 
-  const galleryImagesList = form.images
-    ? form.images.split(",").map(s => s.trim()).filter(Boolean)
-    : [];
+  const filteredProjects = projects.filter(p => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      (p.title || "").toLowerCase().includes(q) ||
+      (p.category || "").toLowerCase().includes(q) ||
+      (p.tags || "").toLowerCase().includes(q)
+    );
+  });
 
   if (loading) return <p className="text-muted-foreground">Loading projects...</p>;
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold">Projects ({projects.length})</h2>
+      {/* Header Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Featured Projects ({projects.length})</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Manage your design case studies, interactive galleries, and cover showcases
+          </p>
+        </div>
         <button
           onClick={() => {
             if (showForm) {
@@ -549,376 +648,633 @@ function ProjectsTab() {
               handleStartAdd();
             }
           }}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition shadow-sm"
         >
-          {showForm ? "Cancel" : <><Plus size={16} /> Add Project</>}
+          {showForm ? "Cancel Studio" : <><Plus size={16} /> Add New Project</>}
         </button>
       </div>
 
-      {/* Add / Edit Form */}
+      {/* ─── SPLIT-SCREEN PROJECT STUDIO FORM ──────────────────────────────── */}
       {showForm && (
-        <form onSubmit={handleSubmit} className="mb-8 p-6 rounded-2xl border border-border bg-card space-y-6 shadow-sm">
-          <div className="flex items-center justify-between pb-3 border-b border-border">
-            <h3 className="font-semibold text-foreground text-base">
-              {editingId ? "Edit Project" : "Add New Project"}
-            </h3>
-            {editingId && (
-              <span className="text-xs font-mono text-primary bg-primary/10 px-2 py-0.5 rounded-md">
-                ID #{editingId}
-              </span>
-            )}
-          </div>
-
-          {uploadError && (
-            <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm">
-              {uploadError}
-            </div>
-          )}
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Title *</label>
-              <input
-                required
-                placeholder="Saudi Government Portal"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Slug (auto-generated if empty)</label>
-              <input
-                placeholder="saudi-gov-portal"
-                value={form.slug}
-                onChange={(e) => setForm({ ...form, slug: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Category</label>
-              <input
-                placeholder="Government UX / Web App"
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Year</label>
-              <input
-                placeholder="2024"
-                value={form.year}
-                onChange={(e) => setForm({ ...form, year: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Accent Color (Hex)</label>
-              <div className="flex gap-2">
-                <input
-                  type="color"
-                  value={form.accent_color || "#aaff38"}
-                  onChange={(e) => setForm({ ...form, accent_color: e.target.value })}
-                  className="w-10 h-10 rounded-lg cursor-pointer border border-border bg-transparent p-0.5"
-                />
-                <input
-                  placeholder="#aaff38"
-                  value={form.accent_color}
-                  onChange={(e) => setForm({ ...form, accent_color: e.target.value })}
-                  className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Sort Order</label>
-              <input
-                type="number"
-                placeholder="1"
-                value={form.sort_order}
-                onChange={(e) => setForm({ ...form, sort_order: Number(e.target.value) })}
-                className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1">Short Description (for card)</label>
-            <textarea
-              placeholder="Brief summary of the project..."
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              rows={2}
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1">Full Description (for project detail page)</label>
-            <textarea
-              placeholder="Comprehensive project overview and case study details..."
-              value={form.full_description}
-              onChange={(e) => setForm({ ...form, full_description: e.target.value })}
-              rows={3}
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1">Tags (comma separated)</label>
-            <input
-              placeholder="UX Research, Figma, Design System, RTL"
-              value={form.tags}
-              onChange={(e) => setForm({ ...form, tags: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          {/* ─── COVER IMAGE UPLOADER ────────────────────────────────────── */}
-          <div className="p-5 rounded-2xl border border-border bg-muted/20 space-y-3">
-            <div className="flex items-center justify-between">
+        <form onSubmit={handleSubmit} className="mb-10 space-y-6">
+          <div className="p-6 sm:p-8 rounded-3xl border border-border bg-card shadow-md space-y-8">
+            {/* Form Top Title */}
+            <div className="flex flex-wrap items-center justify-between pb-4 border-b border-border gap-3">
               <div>
-                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <ImageIcon size={16} className="text-primary" /> Cover / Thumbnail Image *
-                </h4>
-                <p className="text-xs text-muted-foreground">The main card image displayed in the project grid</p>
+                <h3 className="font-display font-bold text-foreground text-xl">
+                  {editingId ? "Edit Project Studio" : "Project Creation Studio"}
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Real-time preview updates automatically as you design your project card
+                </p>
               </div>
-              {form.cover_image && (
-                <button
-                  type="button"
-                  onClick={() => setForm(prev => ({ ...prev, cover_image: "" }))}
-                  className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1"
+              <div className="flex items-center gap-2">
+                <span
+                  className="px-3 py-1 rounded-full text-xs font-mono font-bold flex items-center gap-1.5"
+                  style={{ backgroundColor: `${form.accent_color}22`, color: form.accent_color }}
                 >
-                  <Trash2 size={13} /> Remove Cover
-                </button>
-              )}
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: form.accent_color }} />
+                  {form.accent_color}
+                </span>
+                {editingId && (
+                  <span className="text-xs font-mono text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-full">
+                    ID #{editingId}
+                  </span>
+                )}
+              </div>
             </div>
 
-            {form.cover_image ? (
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 rounded-xl bg-card border border-border">
-                <img
-                  src={form.cover_image}
-                  alt="Cover Preview"
-                  className="w-32 h-20 rounded-lg object-cover border border-border"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted-foreground font-mono truncate">{form.cover_image}</p>
-                  <div className="mt-2 flex items-center gap-3">
-                    <label className="cursor-pointer inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:opacity-80 transition">
-                      <Upload size={14} />
-                      {uploadingCover ? "Uploading..." : "Replace Cover Image"}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        disabled={uploadingCover}
-                        onChange={handleCoverFileChange}
-                        className="hidden"
-                      />
+            {uploadError && (
+              <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-500 text-xs sm:text-sm font-medium">
+                {uploadError}
+              </div>
+            )}
+
+            {/* Split Screen Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              {/* Left Column: Form Controls (Col 7) */}
+              <div className="lg:col-span-7 space-y-6">
+                {/* 1. Basic Info */}
+                <div className="p-5 rounded-2xl border border-border bg-muted/20 space-y-4">
+                  <h4 className="text-xs font-mono font-semibold text-muted-foreground uppercase tracking-wider">
+                    1. Basic Information
+                  </h4>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground mb-1.5">
+                      Project Title *
                     </label>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <label className={`flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl cursor-pointer transition ${
-                  uploadingCover
-                    ? "border-primary/50 bg-primary/5 cursor-wait"
-                    : "border-border hover:border-primary/50 hover:bg-card"
-                }`}>
-                  {uploadingCover ? (
-                    <div className="flex flex-col items-center gap-2 text-primary">
-                      <Loader2 size={24} className="animate-spin" />
-                      <span className="text-xs font-medium">Uploading cover to Supabase Storage...</span>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-2 text-center">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                        <Upload size={18} />
-                      </div>
-                      <div>
-                        <span className="text-sm font-semibold text-foreground">Click to upload cover image from device</span>
-                        <p className="text-xs text-muted-foreground mt-0.5">PNG, JPG, WebP, SVG supported</p>
-                      </div>
-                    </div>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    disabled={uploadingCover}
-                    onChange={handleCoverFileChange}
-                    className="hidden"
-                  />
-                </label>
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-muted-foreground shrink-0 font-mono">Or paste URL:</span>
-                  <input
-                    placeholder="https://..."
-                    value={form.cover_image}
-                    onChange={(e) => setForm({ ...form, cover_image: e.target.value })}
-                    className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-background text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* ─── GALLERY IMAGES UPLOADER ─────────────────────────────────── */}
-          <div className="p-5 rounded-2xl border border-border bg-muted/20 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <ImageIcon size={16} className="text-primary" /> Project Gallery Images
-                </h4>
-                <p className="text-xs text-muted-foreground">Screenshots and mockups for the project detail page</p>
-              </div>
-              <label className={`cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium transition ${
-                uploadingGallery ? "opacity-50 cursor-wait" : "hover:opacity-90"
-              }`}>
-                {uploadingGallery ? <Loader2 size={13} className="animate-spin" /> : <Plus size={14} />}
-                {uploadingGallery ? "Uploading..." : "Upload Gallery Images"}
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  disabled={uploadingGallery}
-                  onChange={handleGalleryFilesChange}
-                  className="hidden"
-                />
-              </label>
-            </div>
-
-            {/* Gallery Images Grid */}
-            {galleryImagesList.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-                {galleryImagesList.map((url, idx) => (
-                  <div key={idx} className="relative group rounded-xl overflow-hidden border border-border bg-card aspect-[3/2]">
-                    <img
-                      src={url}
-                      alt={`Gallery ${idx + 1}`}
-                      className="w-full h-full object-cover"
+                    <input
+                      required
+                      placeholder="e.g. Saudi Government Service Portal"
+                      value={form.title}
+                      onChange={(e) => handleTitleChange(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary"
                     />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveGalleryImage(idx)}
-                      className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-red-500/90 text-white flex items-center justify-center shadow-md hover:bg-red-600 transition"
-                      title="Remove image"
-                    >
-                      <X size={13} />
-                    </button>
-                    <div className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/60 text-white text-[10px] font-mono">
-                      #{idx + 1}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-semibold text-foreground">Slug URL *</label>
+                        <button
+                          type="button"
+                          onClick={() => setAutoSlugSync(!autoSlugSync)}
+                          className="text-[11px] text-primary hover:underline"
+                        >
+                          {autoSlugSync ? "Custom Slug" : "Auto-Sync"}
+                        </button>
+                      </div>
+                      <input
+                        required
+                        placeholder="saudi-government-portal"
+                        value={form.slug}
+                        onChange={(e) => {
+                          setAutoSlugSync(false);
+                          setForm({ ...form, slug: e.target.value });
+                        }}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground font-mono text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-foreground mb-1.5">
+                        Release Year
+                      </label>
+                      <input
+                        placeholder="2024"
+                        value={form.year}
+                        onChange={(e) => setForm({ ...form, year: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6 border border-dashed border-border rounded-xl">
-                <p className="text-xs text-muted-foreground">No gallery images uploaded yet.</p>
-              </div>
-            )}
 
-            <div className="flex items-center gap-2 pt-1">
-              <span className="text-[11px] text-muted-foreground shrink-0 font-mono">Image URLs:</span>
-              <input
-                placeholder="https://image1.jpg, https://image2.jpg"
-                value={form.images}
-                onChange={(e) => setForm({ ...form, images: e.target.value })}
-                className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-background text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-              />
+                  {/* Category with Presets */}
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground mb-1.5">
+                      Category & Domain *
+                    </label>
+                    <input
+                      required
+                      placeholder="e.g. Government UX / Web App"
+                      value={form.category}
+                      onChange={(e) => setForm({ ...form, category: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {CATEGORY_PRESETS.map((cat) => (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => setForm({ ...form, category: cat })}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
+                            form.category === cat
+                              ? "bg-primary text-primary-foreground border-primary font-semibold"
+                              : "bg-card border-border text-muted-foreground hover:text-foreground hover:border-primary/40"
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Accent Color Palette */}
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground mb-1.5">
+                      Accent Color Theme (Used in card gradients & tags)
+                    </label>
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      {ACCENT_SWATCHES.map((swatch) => (
+                        <button
+                          key={swatch.hex}
+                          type="button"
+                          onClick={() => setForm({ ...form, accent_color: swatch.hex })}
+                          className={`w-7 h-7 rounded-full border-2 transition-transform ${
+                            form.accent_color.toLowerCase() === swatch.hex.toLowerCase()
+                              ? "scale-125 border-foreground shadow-md"
+                              : "border-transparent hover:scale-110 opacity-80"
+                          }`}
+                          style={{ backgroundColor: swatch.hex }}
+                          title={swatch.name}
+                        />
+                      ))}
+                      <div className="flex items-center gap-1.5 ml-2">
+                        <input
+                          type="color"
+                          value={form.accent_color || "#aaff38"}
+                          onChange={(e) => setForm({ ...form, accent_color: e.target.value })}
+                          className="w-8 h-8 rounded-lg cursor-pointer border border-border bg-transparent p-0.5"
+                        />
+                        <input
+                          placeholder="#aaff38"
+                          value={form.accent_color}
+                          onChange={(e) => setForm({ ...form, accent_color: e.target.value })}
+                          className="w-24 px-2 py-1 rounded-lg border border-border bg-background text-foreground text-xs font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Descriptions */}
+                <div className="p-5 rounded-2xl border border-border bg-muted/20 space-y-4">
+                  <h4 className="text-xs font-mono font-semibold text-muted-foreground uppercase tracking-wider">
+                    2. Story & Descriptions
+                  </h4>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-semibold text-foreground">
+                        Short Card Summary * (Displayed on the portfolio grid)
+                      </label>
+                      <span className="text-[11px] font-mono text-muted-foreground">
+                        {form.description.length} chars
+                      </span>
+                    </div>
+                    <textarea
+                      required
+                      rows={2}
+                      placeholder="Enterprise digital transformation for high-profile government web services..."
+                      value={form.description}
+                      onChange={(e) => setForm({ ...form, description: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary leading-relaxed"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-foreground mb-1.5">
+                      Full Case Study & Overview (For project detail page)
+                    </label>
+                    <textarea
+                      rows={4}
+                      placeholder="Comprehensive project breakdown, user research findings, design system guidelines, and results..."
+                      value={form.full_description}
+                      onChange={(e) => setForm({ ...form, full_description: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary leading-relaxed"
+                    />
+                  </div>
+                </div>
+
+                {/* 3. Tags Manager */}
+                <div className="p-5 rounded-2xl border border-border bg-muted/20 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-mono font-semibold text-muted-foreground uppercase tracking-wider">
+                      3. Tags & Skills ({form.tagsList.length})
+                    </h4>
+                  </div>
+
+                  {/* Active Tags Chips */}
+                  <div className="flex flex-wrap items-center gap-1.5 min-h-[36px] p-2.5 rounded-xl bg-card border border-border">
+                    {form.tagsList.map((tag, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-medium"
+                      >
+                        <span>{tag}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTag(i)}
+                          className="hover:text-red-500 transition"
+                        >
+                          <X size={12} />
+                        </button>
+                      </span>
+                    ))}
+                    <input
+                      placeholder={form.tagsList.length === 0 ? "Type tag & press Enter..." : "+ add tag..."}
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === ",") {
+                          e.preventDefault();
+                          handleAddTag(tagInput);
+                        }
+                      }}
+                      className="flex-1 min-w-[120px] bg-transparent text-foreground text-xs focus:outline-none px-2 py-0.5"
+                    />
+                  </div>
+
+                  {/* Suggested Tag Pills */}
+                  <div>
+                    <span className="text-[11px] text-muted-foreground block mb-1.5">Quick Suggestions:</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {POPULAR_TAGS.map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => handleAddTag(t)}
+                          disabled={form.tagsList.includes(t)}
+                          className="px-2 py-0.5 rounded-md text-[11px] border border-border bg-card/60 text-muted-foreground hover:text-foreground hover:border-primary/40 disabled:opacity-30 transition"
+                        >
+                          + {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Media Studio */}
+                <div className="p-5 rounded-2xl border border-border bg-muted/20 space-y-4">
+                  <h4 className="text-xs font-mono font-semibold text-muted-foreground uppercase tracking-wider">
+                    4. Project Media Studio
+                  </h4>
+
+                  {/* Cover Image */}
+                  <div className="p-4 rounded-xl border border-border bg-card space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                          <ImageIcon size={14} className="text-primary" />
+                          Cover Image * (Aspect Ratio 16:9 / 3:2)
+                        </span>
+                        <p className="text-[11px] text-muted-foreground">The hero thumbnail in portfolio and detail header</p>
+                      </div>
+                      {form.cover_image && (
+                        <button
+                          type="button"
+                          onClick={() => setForm(prev => ({ ...prev, cover_image: "" }))}
+                          className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1"
+                        >
+                          <Trash2 size={12} /> Clear
+                        </button>
+                      )}
+                    </div>
+
+                    {form.cover_image ? (
+                      <div className="relative rounded-xl overflow-hidden border border-border aspect-[16/9] max-h-48 group">
+                        <img
+                          src={form.cover_image}
+                          alt="Cover"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                          <label className="px-3.5 py-1.5 rounded-lg bg-white text-black font-semibold text-xs cursor-pointer hover:bg-white/90 transition flex items-center gap-1.5">
+                            <Upload size={13} /> Replace Cover
+                            <input
+                              type="file"
+                              accept="image/*"
+                              disabled={uploadingCover}
+                              onChange={handleCoverFileChange}
+                              className="hidden"
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    ) : (
+                      <label className={`flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl cursor-pointer transition ${
+                        uploadingCover
+                          ? "border-primary/50 bg-primary/5 cursor-wait"
+                          : "border-border hover:border-primary/50 hover:bg-muted/40"
+                      }`}>
+                        {uploadingCover ? (
+                          <div className="flex flex-col items-center gap-2 text-primary">
+                            <Loader2 size={22} className="animate-spin" />
+                            <span className="text-xs font-medium">Uploading cover to storage...</span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center gap-2 text-center">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                              <Upload size={18} />
+                            </div>
+                            <span className="text-xs font-semibold text-foreground">Click to upload cover image</span>
+                            <span className="text-[11px] text-muted-foreground">PNG, JPG, WebP recommended</span>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={uploadingCover}
+                          onChange={handleCoverFileChange}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                  </div>
+
+                  {/* Gallery Images */}
+                  <div className="p-4 rounded-xl border border-border bg-card space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-xs font-semibold text-foreground">
+                          Lightbox Gallery Images ({form.imagesList.length})
+                        </span>
+                        <p className="text-[11px] text-muted-foreground">Full-resolution images for the interactive fullscreen Lightbox (3:2 ratio)</p>
+                      </div>
+
+                      <label className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground font-semibold text-xs cursor-pointer hover:opacity-90 transition shadow-sm ${
+                        uploadingGallery ? "opacity-50 pointer-events-none" : ""
+                      }`}>
+                        {uploadingGallery ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
+                        {uploadingGallery ? "Uploading..." : "Upload Images"}
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          disabled={uploadingGallery}
+                          onChange={handleGalleryFilesChange}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+
+                    {form.imagesList.length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-2">
+                        {form.imagesList.map((url, idx) => (
+                          <div key={idx} className="relative group rounded-xl overflow-hidden border border-border bg-muted aspect-[3/2]">
+                            <img src={url} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
+                              <div className="flex justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveGalleryImage(idx)}
+                                  className="w-6 h-6 rounded-full bg-red-500/90 text-white flex items-center justify-center hover:bg-red-600 transition"
+                                  title="Remove image"
+                                >
+                                  <X size={12} />
+                                </button>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleSetAsCover(url)}
+                                className="px-2 py-1 rounded bg-white text-black text-[10px] font-bold text-center hover:bg-white/90 transition"
+                              >
+                                Set as Cover
+                              </button>
+                            </div>
+                            <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/70 text-white text-[10px] font-mono">
+                              #{idx + 1}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-5 border border-dashed border-border rounded-xl">
+                        <p className="text-xs text-muted-foreground">No gallery images uploaded yet.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 5. Options */}
+                <div className="flex items-center justify-between p-4 rounded-2xl border border-border bg-muted/20">
+                  <div>
+                    <span className="text-xs font-semibold text-foreground">Featured Project</span>
+                    <p className="text-[11px] text-muted-foreground">Highlights this project at the top of your portfolio</p>
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.is_featured}
+                      onChange={(e) => setForm({ ...form, is_featured: e.target.checked })}
+                      className="w-4 h-4 rounded text-primary border-border focus:ring-primary"
+                    />
+                    <span className="text-xs font-medium text-foreground">Feature on Home</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Right Column: Sticky Live Card Preview (Col 5) */}
+              <div className="lg:col-span-5 lg:sticky lg:top-24 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono font-semibold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                    <Eye size={14} /> Live Card Preview
+                  </span>
+                  <span className="text-[11px] text-muted-foreground font-mono">Real-time render</span>
+                </div>
+
+                {/* Live Card Rendering */}
+                <div className="block w-full text-left group relative rounded-3xl overflow-hidden border border-border bg-card shadow-lg">
+                  {/* Image */}
+                  <div className="relative h-48 sm:h-52 overflow-hidden bg-muted/40">
+                    {form.cover_image ? (
+                      <img
+                        src={form.cover_image}
+                        alt={form.title || "Project Preview"}
+                        className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground gap-2">
+                        <ImageIcon size={32} className="opacity-40" />
+                        <span className="text-xs font-mono opacity-60">Upload Cover Image</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent pointer-events-none" />
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        background: `linear-gradient(135deg, ${form.accent_color}25 0%, transparent 60%)`,
+                      }}
+                    />
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-5 sm:p-6 min-w-0">
+                    <div className="flex items-center justify-between mb-3 gap-2">
+                      <span
+                        className="text-xs font-mono px-2.5 py-1 rounded-full shrink-0 font-semibold"
+                        style={{ backgroundColor: `${form.accent_color}20`, color: form.accent_color }}
+                      >
+                        {form.year || "2024"}
+                      </span>
+                      <ArrowUpRight size={18} className="text-primary shrink-0" />
+                    </div>
+                    <h3
+                      className="text-lg font-display font-bold text-foreground mb-1.5 truncate"
+                      title={form.title || "Project Title"}
+                    >
+                      {form.title || "Project Title Goes Here"}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mb-4 leading-relaxed line-clamp-2">
+                      {form.description || "Brief project summary and value proposition will appear here..."}
+                    </p>
+                    <div className="text-xs text-muted-foreground font-mono">
+                      {form.category || "Design Category"}
+                    </div>
+                  </div>
+
+                  {/* Bottom accent bar */}
+                  <div
+                    className="h-1 w-full"
+                    style={{
+                      background: `linear-gradient(90deg, transparent, ${form.accent_color}, transparent)`,
+                    }}
+                  />
+                </div>
+
+                {/* Studio Action Buttons in Sticky Panel */}
+                <div className="p-4 rounded-2xl border border-border bg-card space-y-2.5 pt-4">
+                  <button
+                    type="submit"
+                    className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold hover:opacity-90 transition shadow-sm text-sm"
+                  >
+                    {editingId ? "Update Project in Portfolio" : "Publish Project to Portfolio"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowForm(false);
+                      setEditingId(null);
+                    }}
+                    className="w-full py-2.5 rounded-xl border border-border text-foreground font-medium hover:bg-muted/50 transition text-sm"
+                  >
+                    Cancel Studio
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-
-          <div className="flex items-center gap-4 pt-2">
-            <button
-              type="submit"
-              className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition shadow-sm"
-            >
-              {editingId ? "Update Project" : "Save Project"}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setShowForm(false);
-                setEditingId(null);
-              }}
-              className="px-6 py-3 rounded-xl border border-border text-foreground font-medium hover:bg-muted/50 transition"
-            >
-              Cancel
-            </button>
           </div>
         </form>
       )}
 
+      {/* ─── SEARCH & FILTER BAR ─────────────────────────────────────────── */}
+      <div className="mb-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="relative w-full sm:w-80">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input
+            placeholder="Search projects by title, category, or tags..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 rounded-xl border border-border bg-card text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+        {searchQuery && (
+          <span className="text-xs font-mono text-muted-foreground">
+            Found {filteredProjects.length} of {projects.length}
+          </span>
+        )}
+      </div>
+
       {/* Projects List */}
-      {projects.length === 0 ? (
-        <div className="text-center py-12 border border-dashed border-border rounded-2xl">
-          <p className="text-muted-foreground mb-3">No projects added yet.</p>
+      {filteredProjects.length === 0 ? (
+        <div className="text-center py-12 border border-dashed border-border rounded-3xl">
+          <p className="text-muted-foreground mb-3">
+            {searchQuery ? "No projects match your search criteria." : "No projects added yet."}
+          </p>
           <button
             onClick={handleStartAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-sm"
           >
             <Plus size={16} /> Add your first project
           </button>
         </div>
       ) : (
         <div className="space-y-3">
-          {projects.map((project) => (
-            <div
-              key={project.id}
-              className="flex items-center gap-4 p-4 rounded-2xl border border-border bg-card hover:border-primary/30 transition-colors"
-            >
-              {project.cover_image ? (
-                <img
-                  src={project.cover_image}
-                  alt={project.title}
-                  className="w-16 h-16 rounded-xl object-cover border border-border shrink-0"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center text-xs font-mono text-muted-foreground shrink-0">
-                  No img
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-foreground truncate">{project.title}</h3>
-                  <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">
-                    {project.year || "2024"}
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground truncate">{project.category}</p>
-                <p className="text-xs text-muted-foreground/70 truncate mt-0.5">{project.description}</p>
-              </div>
+          {filteredProjects.map((project) => {
+            const galleryCount = project.images
+              ? (Array.isArray(project.images) ? project.images.length : project.images.split(",").filter(Boolean).length)
+              : 0;
 
-              <div className="flex items-center gap-1.5 shrink-0">
-                <a
-                  href={`/project/${project.slug || project.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition"
-                  title="View live project"
-                >
-                  <ExternalLink size={16} />
-                </a>
-                <button
-                  onClick={() => handleStartEdit(project)}
-                  className="p-2 rounded-lg hover:bg-primary/10 text-primary transition"
-                  title="Edit project"
-                >
-                  <Pencil size={16} />
-                </button>
-                <button
-                  onClick={() => setDeleteModal({ id: project.id, title: project.title })}
-                  className="p-2 rounded-lg hover:bg-red-500/10 text-red-500 transition"
-                  title="Delete project"
-                >
-                  <Trash2 size={16} />
-                </button>
+            return (
+              <div
+                key={project.id}
+                className="flex items-center gap-4 p-4 rounded-2xl border border-border bg-card hover:border-primary/40 transition-all shadow-sm group"
+              >
+                {project.cover_image ? (
+                  <img
+                    src={project.cover_image}
+                    alt={project.title}
+                    className="w-20 h-14 rounded-xl object-cover border border-border shrink-0"
+                  />
+                ) : (
+                  <div className="w-20 h-14 rounded-xl bg-muted flex items-center justify-center text-[10px] font-mono text-muted-foreground shrink-0">
+                    No cover
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h3 className="font-display font-bold text-foreground truncate text-sm sm:text-base">
+                      {project.title}
+                    </h3>
+                    <span
+                      className="text-xs font-mono px-2 py-0.5 rounded-full font-semibold shrink-0"
+                      style={{ backgroundColor: `${project.accent_color || "#aaff38"}20`, color: project.accent_color || "#aaff38" }}
+                    >
+                      {project.year || "2024"}
+                    </span>
+                    {galleryCount > 0 && (
+                      <span className="text-[11px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded-full shrink-0">
+                        {galleryCount} gallery
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate">{project.category}</p>
+                  <p className="text-xs text-muted-foreground/70 truncate mt-0.5">{project.description}</p>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <a
+                    href={`/project/${project.slug || project.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition"
+                    title="View live project"
+                  >
+                    <ExternalLink size={16} />
+                  </a>
+                  <button
+                    onClick={() => handleStartEdit(project)}
+                    className="p-2 rounded-lg hover:bg-primary/10 text-primary transition"
+                    title="Edit project"
+                  >
+                    <Pencil size={16} />
+                  </button>
+                  <button
+                    onClick={() => setDeleteModal({ id: project.id, title: project.title })}
+                    className="p-2 rounded-lg hover:bg-red-500/10 text-red-500 transition"
+                    title="Delete project"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
+      {/* Confirm Delete Modal */}
       <ConfirmModal
         isOpen={!!deleteModal}
         title="Delete Project"
