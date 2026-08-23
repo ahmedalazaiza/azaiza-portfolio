@@ -140,13 +140,13 @@ export default function HeroSection({ onWorkClick }: HeroSectionProps) {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
               </div>
 
-              {/* Stat Card 1: Top Left - Clean Entrance, No JS Animation Loop */}
+              {/* Stat Card 1: Top Left */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.85, y: 15 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.45, ease: "easeOut" }}
                 whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                className="absolute -top-6 -left-8 bg-card/95 backdrop-blur-sm border border-border rounded-2xl px-4 py-3 shadow-lg hover:border-primary/40 transition-colors"
+                className="absolute -top-4 sm:-top-6 -left-2 sm:-left-8 bg-card/95 backdrop-blur-sm border border-border rounded-2xl px-3.5 sm:px-4 py-2 sm:py-3 shadow-lg hover:border-primary/40 transition-colors z-10"
               >
                 <div className="flex items-center gap-2">
                   <Star size={14} className="text-primary fill-primary" />
@@ -161,7 +161,7 @@ export default function HeroSection({ onWorkClick }: HeroSectionProps) {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.55, ease: "easeOut" }}
                 whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                className="absolute -bottom-6 -right-8 bg-card/95 backdrop-blur-sm border border-border rounded-2xl px-4 py-3 shadow-lg hover:border-primary/40 transition-colors"
+                className="absolute -bottom-4 sm:-bottom-6 -right-2 sm:-right-8 bg-card/95 backdrop-blur-sm border border-border rounded-2xl px-3.5 sm:px-4 py-2 sm:py-3 shadow-lg hover:border-primary/40 transition-colors z-10"
               >
                 <div className="flex items-center gap-2">
                   <Award size={14} className="text-primary" />
@@ -176,7 +176,7 @@ export default function HeroSection({ onWorkClick }: HeroSectionProps) {
                 animate={{ opacity: 1, scale: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.65, ease: "easeOut" }}
                 whileHover={{ x: 4, transition: { duration: 0.2 } }}
-                className="absolute top-1/2 -right-12 -translate-y-1/2 bg-primary text-primary-foreground rounded-2xl px-4 py-3 shadow-lg hover:opacity-95 transition-opacity"
+                className="absolute top-1/2 -right-3 sm:-right-10 -translate-y-1/2 bg-primary text-primary-foreground rounded-2xl px-3.5 sm:px-4 py-2 sm:py-3 shadow-lg hover:opacity-95 transition-opacity z-10"
               >
                 <div className="text-sm font-mono font-bold">8+ Years</div>
                 <div className="text-xs opacity-90 font-medium">Experience</div>

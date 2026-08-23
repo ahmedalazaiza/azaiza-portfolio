@@ -70,7 +70,7 @@ export default function PortfolioSection() {
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-full min-w-0">
           {loading ? (
             <div className="col-span-full py-12 text-center text-muted-foreground">
               Loading projects...
@@ -86,6 +86,7 @@ export default function PortfolioSection() {
                 initial={{ opacity: 0, y: 25 }}
                 animate={inView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.4, delay: i * 0.07 }}
+                className="w-full max-w-full min-w-0"
               >
                 <ProjectCard project={project} />
               </motion.div>
