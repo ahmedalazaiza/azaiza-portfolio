@@ -8,6 +8,7 @@ import ScrollToTopButton from "./components/ScrollToTopButton";
 import HomePage from "./pages/HomePage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import DashboardPage from "./pages/DashboardPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 export const API_BASE: string =
   (import.meta as any).env?.VITE_API_URL ?? "https://api.yourdomain.com";
@@ -35,7 +36,7 @@ function AppContent({
           <Route path="/project/:slug" element={<ProjectDetailPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/adashboard" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AnimatePresence>
 
