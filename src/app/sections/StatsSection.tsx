@@ -38,7 +38,7 @@ export default function StatsSection() {
   const inView = useInView(ref, { once: true, margin: "-60px" });
 
   const stats: StatDef[] = [
-    { value: 7, suffix: "+", label: "Years Experience", icon: Clock, delay: 0 },
+    { value: 8, suffix: "+", label: "Years Experience", icon: Clock, delay: 0 },
     { value: 70, suffix: "+", label: "Projects Delivered", icon: Briefcase, delay: 1 },
     { value: 100, suffix: "%", label: "Job Success Score", icon: Award, delay: 2 },
     { value: 80, prefix: "$", suffix: "K+", label: "In Design Solutions", icon: Users, delay: 3 },

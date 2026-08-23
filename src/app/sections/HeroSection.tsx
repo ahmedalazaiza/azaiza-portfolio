@@ -178,7 +178,7 @@ export default function HeroSection({ onWorkClick }: HeroSectionProps) {
                 whileHover={{ x: 4, transition: { duration: 0.2 } }}
                 className="absolute top-1/2 -right-12 -translate-y-1/2 bg-primary text-primary-foreground rounded-2xl px-4 py-3 shadow-lg hover:opacity-95 transition-opacity"
               >
-                <div className="text-sm font-mono font-bold">7 Years</div>
+                <div className="text-sm font-mono font-bold">8+ Years</div>
                 <div className="text-xs opacity-90 font-medium">Experience</div>
               </motion.div>
             </div>
