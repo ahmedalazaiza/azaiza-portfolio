@@ -36,6 +36,7 @@ function AppContent({
           <Route path="/project/:slug" element={<ProjectDetailPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/adashboard" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/404" element={<NotFoundPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AnimatePresence>
