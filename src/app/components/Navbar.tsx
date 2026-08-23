@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { Sun, Moon, ChevronLeft, Menu, X } from "lucide-react";
@@ -12,6 +12,7 @@ interface NavbarProps {
 export default function Navbar({ isDark, onToggleTheme }: NavbarProps) {
   const isScrolled = useScrolled(40);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("hero");
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -20,12 +21,52 @@ export default function Navbar({ isDark, onToggleTheme }: NavbarProps) {
   const isDashboard = location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/adashboard");
 
   const navLinks = [
+    { label: "Home", id: "hero" },
     { label: "About", id: "about" },
     { label: "Services", id: "services" },
-    { label: "Work", id: "work" },
     { label: "Experience", id: "experience" },
+    { label: "Work", id: "work" },
     { label: "Contact", id: "contact" },
   ];
+
+  // ScrollSpy to track active section
+  useEffect(() => {
+    if (!isHome) return;
+
+    const sectionIds = ["hero", "about", "services", "experience", "work", "contact"];
+
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + 160;
+
+      // Near top of page
+      if (window.scrollY < 120) {
+        setActiveSection("hero");
+        return;
+      }
+
+      // Near bottom of page
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100) {
+        setActiveSection("contact");
+        return;
+      }
+
+      for (let i = sectionIds.length - 1; i >= 0; i--) {
+        const el = document.getElementById(sectionIds[i]);
+        if (el) {
+          const top = el.offsetTop;
+          if (scrollPosition >= top) {
+            setActiveSection(sectionIds[i]);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [isHome]);
 
   const handleNavClick = (sectionId: string) => {
     setMenuOpen(false);
@@ -38,9 +79,15 @@ export default function Navbar({ isDark, onToggleTheme }: NavbarProps) {
         }
       }, 150);
     } else {
-      const el = document.getElementById(sectionId);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth" });
+      if (sectionId === "hero") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setActiveSection("hero");
+      } else {
+        const el = document.getElementById(sectionId);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+          setActiveSection(sectionId);
+        }
       }
     }
   };
@@ -49,6 +96,7 @@ export default function Navbar({ isDark, onToggleTheme }: NavbarProps) {
     if (isHome) {
       e.preventDefault();
       window.scrollTo({ top: 0, behavior: "smooth" });
+      setActiveSection("hero");
     }
   };
 
@@ -78,7 +126,7 @@ export default function Navbar({ isDark, onToggleTheme }: NavbarProps) {
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-7">
           {isProject ? (
             <Link
               to="/"
@@ -87,16 +135,29 @@ export default function Navbar({ isDark, onToggleTheme }: NavbarProps) {
               <ChevronLeft size={16} /> Back to home
             </Link>
           ) : (
-            navLinks.map(({ label, id }) => (
-              <button
-                key={id}
-                onClick={() => handleNavClick(id)}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors relative group font-medium"
-              >
-                {label}
-                <span className="absolute -bottom-1 left-0 w-0 h-px bg-primary transition-all duration-300 group-hover:w-full" />
-              </button>
-            ))
+            navLinks.map(({ label, id }) => {
+              const isActive = isHome && activeSection === id;
+              return (
+                <button
+                  key={id}
+                  onClick={() => handleNavClick(id)}
+                  className={`text-sm transition-colors duration-200 relative py-1 font-medium ${
+                    isActive
+                      ? "text-primary font-semibold"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {label}
+                  {isActive && (
+                    <motion.span
+                      layoutId="activeNavIndicator"
+                      className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary rounded-full shadow-[0_0_8px_rgba(170,255,56,0.5)]"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                </button>
+              );
+            })
           )}
         </div>
 
@@ -135,29 +196,37 @@ export default function Navbar({ isDark, onToggleTheme }: NavbarProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="md:hidden bg-background/95 backdrop-blur-lg border-b border-border px-6 pb-6 shadow-xl"
+            className="md:hidden bg-background/95 backdrop-blur-lg border-b border-border px-6 pb-6 pt-2 shadow-xl space-y-1"
           >
             {isProject ? (
               <Link
                 to="/"
                 onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-2 py-3 text-lg text-foreground border-b border-border/50 font-medium"
+                className="flex items-center gap-2 py-3 text-base text-foreground border-b border-border/50 font-medium"
               >
                 <ChevronLeft size={18} /> Back to home
               </Link>
             ) : (
-              navLinks.map(({ label, id }) => (
-                <button
-                  key={id}
-                  onClick={() => handleNavClick(id)}
-                  className="block w-full text-left py-3 text-lg text-muted-foreground hover:text-foreground border-b border-border/50 last:border-0 transition-colors font-medium"
-                >
-                  {label}
-                </button>
-              ))
+              navLinks.map(({ label, id }) => {
+                const isActive = isHome && activeSection === id;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => handleNavClick(id)}
+                    className={`flex items-center justify-between w-full text-left py-2.5 px-3 rounded-xl text-base font-medium transition-colors ${
+                      isActive
+                        ? "text-primary bg-primary/10 font-semibold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                    }`}
+                  >
+                    <span>{label}</span>
+                    {isActive && <span className="w-2 h-2 rounded-full bg-primary" />}
+                  </button>
+                );
+              })
             )}
             <button
-              className="mt-4 w-full py-3 rounded-full bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
+              className="mt-3 w-full py-3 rounded-full bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
               onClick={() => handleNavClick("contact")}
             >
               Hire Me
