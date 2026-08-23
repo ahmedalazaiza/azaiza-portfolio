@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useLocation, useNavigate, Link } from "react-router";
 import { motion } from "motion/react";
-import { ChevronLeft, ArrowUpRight, Mail } from "lucide-react";
+import { ChevronLeft, ArrowUpRight, Mail, ZoomIn } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { Project } from "../types";
 import { FALLBACK_PROJECTS } from "../data/fallbackProjects";
+import Lightbox from "../components/Lightbox";
 
 export default function ProjectDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -18,6 +19,8 @@ export default function ProjectDetailPage() {
   });
   const [loading, setLoading] = useState(!project);
   const [error, setError] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -112,6 +115,8 @@ export default function ProjectDetailPage() {
     );
   }
 
+  const allImages = [project.coverImage, ...(project.images || [])].filter(Boolean);
+
   return (
     <motion.main
       initial={{ opacity: 0 }}
@@ -188,12 +193,24 @@ export default function ProjectDetailPage() {
       {/* Project Cover Image */}
       {project.coverImage && (
         <section className="py-12 max-w-5xl mx-auto px-6 lg:px-10">
-          <div className="rounded-3xl overflow-hidden border border-border bg-card shadow-lg">
+          <div
+            onClick={() => {
+              setLightboxIndex(0);
+              setLightboxOpen(true);
+            }}
+            className="group relative rounded-3xl overflow-hidden border border-border bg-card shadow-lg cursor-zoom-in"
+            title="Click to view cover in Lightbox"
+          >
             <img
               src={project.coverImage}
               alt={project.title}
-              className="w-full h-auto max-h-[600px] object-cover object-center"
+              className="w-full h-auto max-h-[600px] object-cover object-center transition-transform duration-500 group-hover:scale-[1.02]"
             />
+            <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
+              <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-black/75 backdrop-blur-md text-white text-sm font-semibold border border-white/20 shadow-2xl">
+                <ZoomIn size={16} className="text-primary" /> Click to expand image
+              </span>
+            </div>
           </div>
         </section>
       )}
@@ -202,29 +219,49 @@ export default function ProjectDetailPage() {
       {project.images && project.images.length > 0 && (
         <section className="py-16">
           <div className="max-w-5xl mx-auto px-6 lg:px-10">
-            <h2 className="text-2xl font-display font-bold text-foreground mb-8">Project Gallery</h2>
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-2xl font-display font-bold text-foreground">Project Gallery</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Click any image to open full resolution Lightbox</p>
+              </div>
+              <span className="text-xs font-mono text-primary bg-primary/10 border border-primary/20 px-3 py-1 rounded-full font-medium">
+                {project.images.length} Images
+              </span>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {project.images.map((src, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-40px" }}
-                  transition={{ duration: 0.4, delay: (i % 2) * 0.1 }}
-                  className="group relative rounded-2xl overflow-hidden border border-border bg-card aspect-[3/2]"
-                >
-                  <img
-                    src={src}
-                    alt={`${project.title} — screenshot ${i + 1}`}
-                    loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-                  <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm rounded-full px-3 py-1 text-white text-xs font-mono opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                    {String(i + 1).padStart(2, "0")} / {String(project.images.length).padStart(2, "0")}
-                  </div>
-                </motion.div>
-              ))}
+              {project.images.map((src, i) => {
+                const imageIndex = project.coverImage ? i + 1 : i;
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-40px" }}
+                    transition={{ duration: 0.4, delay: (i % 2) * 0.1 }}
+                    onClick={() => {
+                      setLightboxIndex(imageIndex);
+                      setLightboxOpen(true);
+                    }}
+                    className="group relative rounded-2xl overflow-hidden border border-border bg-card aspect-[3/2] cursor-zoom-in"
+                  >
+                    <img
+                      src={src}
+                      alt={`${project.title} — screenshot ${i + 1}`}
+                      loading="lazy"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
+                      <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-black/75 backdrop-blur-md text-white text-xs font-semibold border border-white/20 shadow-lg">
+                        <ZoomIn size={14} className="text-primary" /> View Fullscreen
+                      </span>
+                    </div>
+                    <div className="absolute bottom-3 right-3 bg-black/70 backdrop-blur-sm rounded-full px-3 py-1 text-white text-xs font-mono opacity-80 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                      {String(i + 1).padStart(2, "0")} / {String(project.images.length).padStart(2, "0")}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -253,6 +290,15 @@ export default function ProjectDetailPage() {
           </div>
         </div>
       </section>
+
+      {/* Lightbox Component */}
+      <Lightbox
+        isOpen={lightboxOpen}
+        images={allImages}
+        initialIndex={lightboxIndex}
+        projectTitle={project.title}
+        onClose={() => setLightboxOpen(false)}
+      />
     </motion.main>
   );
 }
