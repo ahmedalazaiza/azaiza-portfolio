@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { supabase } from "../lib/supabase";
 import { ArrowLeft, Mail, Briefcase, Clock, Trash2, Check, Eye, Pencil, Plus, ExternalLink, Upload, Image as ImageIcon, X, Loader2 } from "lucide-react";
+import { sortExperiences } from "./sections/TimelineSection";
 
 interface AdashboardProps {
   onBack?: () => void;
@@ -909,10 +910,9 @@ function ExperiencesTab() {
     setLoading(true);
     const { data, error } = await supabase
       .from("experiences")
-      .select("*")
-      .order("sort_order", { ascending: true });
+      .select("*");
 
-    if (!error) setExperiences(data || []);
+    if (!error) setExperiences(sortExperiences(data || []));
     setLoading(false);
   }
 
