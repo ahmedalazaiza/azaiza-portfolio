@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { supabase } from "../lib/supabase";
 import { ArrowLeft, Mail, Briefcase, Clock, Trash2, Check, Eye, Pencil, Plus, ExternalLink, Upload, Image as ImageIcon, X, Loader2 } from "lucide-react";
 import { sortExperiences } from "./sections/TimelineSection";
+import ConfirmModal from "./components/ConfirmModal";
 
 interface AdashboardProps {
   onBack?: () => void;
@@ -201,6 +202,9 @@ function MessagesTab() {
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [deleteModal, setDeleteModal] = useState<{ id: number; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   useEffect(() => {
     loadMessages();
   }, []);
@@ -220,9 +224,12 @@ function MessagesTab() {
     loadMessages();
   }
 
-  async function deleteMessage(id: number) {
-    if (!confirm("Delete this message?")) return;
-    await supabase.from("messages").delete().eq("id", id);
+  async function handleConfirmDelete() {
+    if (!deleteModal) return;
+    setIsDeleting(true);
+    await supabase.from("messages").delete().eq("id", deleteModal.id);
+    setIsDeleting(false);
+    setDeleteModal(null);
     loadMessages();
   }
 
@@ -257,7 +264,7 @@ function MessagesTab() {
                 </button>
               )}
               <button
-                onClick={() => deleteMessage(msg.id)}
+                onClick={() => setDeleteModal({ id: msg.id, name: `${msg.name} (${msg.email})` })}
                 className="p-2 rounded-lg hover:bg-red-500/10 text-red-500 transition"
                 title="Delete"
               >
@@ -274,6 +281,18 @@ function MessagesTab() {
           </p>
         </div>
       ))}
+
+      <ConfirmModal
+        isOpen={!!deleteModal}
+        title="Delete Contact Message"
+        message="Are you sure you want to delete this message? This action cannot be undone."
+        itemName={deleteModal?.name}
+        confirmText="Delete Message"
+        isDestructive={true}
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setDeleteModal(null)}
+      />
     </div>
   );
 }
@@ -425,6 +444,9 @@ function ProjectsTab() {
     }
   }
 
+  const [deleteModal, setDeleteModal] = useState<{ id: number; title: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   function handleRemoveGalleryImage(index: number) {
     const currentList = form.images
       ? form.images.split(",").map(s => s.trim()).filter(Boolean)
@@ -433,13 +455,16 @@ function ProjectsTab() {
     setForm(prev => ({ ...prev, images: updated }));
   }
 
-  async function deleteProject(id: number) {
-    if (!confirm("Are you sure you want to delete this project?")) return;
-    const { error } = await supabase.from("projects").delete().eq("id", id);
+  async function handleConfirmDelete() {
+    if (!deleteModal) return;
+    setIsDeleting(true);
+    const { error } = await supabase.from("projects").delete().eq("id", deleteModal.id);
+    setIsDeleting(false);
     if (error) {
       alert("Error: " + error.message);
       return;
     }
+    setDeleteModal(null);
     loadProjects();
   }
 
@@ -871,7 +896,7 @@ function ProjectsTab() {
                   <Pencil size={16} />
                 </button>
                 <button
-                  onClick={() => deleteProject(project.id)}
+                  onClick={() => setDeleteModal({ id: project.id, title: project.title })}
                   className="p-2 rounded-lg hover:bg-red-500/10 text-red-500 transition"
                   title="Delete project"
                 >
@@ -882,6 +907,18 @@ function ProjectsTab() {
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!deleteModal}
+        title="Delete Project"
+        message="Are you sure you want to delete this project? This will permanently remove the case study and all gallery images from your portfolio."
+        itemName={deleteModal?.title}
+        confirmText="Delete Project"
+        isDestructive={true}
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setDeleteModal(null)}
+      />
     </div>
   );
 }
@@ -944,13 +981,19 @@ function ExperiencesTab() {
     setShowForm(true);
   }
 
-  async function deleteExperience(id: number) {
-    if (!confirm("Are you sure you want to delete this experience?")) return;
-    const { error } = await supabase.from("experiences").delete().eq("id", id);
+  const [deleteModal, setDeleteModal] = useState<{ id: number; title: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  async function handleConfirmDelete() {
+    if (!deleteModal) return;
+    setIsDeleting(true);
+    const { error } = await supabase.from("experiences").delete().eq("id", deleteModal.id);
+    setIsDeleting(false);
     if (error) {
       alert("Error: " + error.message);
       return;
     }
+    setDeleteModal(null);
     loadExperiences();
   }
 
@@ -1171,7 +1214,7 @@ function ExperiencesTab() {
                   <Pencil size={16} />
                 </button>
                 <button
-                  onClick={() => deleteExperience(exp.id)}
+                  onClick={() => setDeleteModal({ id: exp.id, title: `${exp.role} · ${exp.company}` })}
                   className="p-2 rounded-lg hover:bg-red-500/10 text-red-500 transition"
                   title="Delete experience"
                 >
@@ -1182,6 +1225,18 @@ function ExperiencesTab() {
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!deleteModal}
+        title="Delete Experience"
+        message="Are you sure you want to delete this career experience from your timeline?"
+        itemName={deleteModal?.title}
+        confirmText="Delete Experience"
+        isDestructive={true}
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setDeleteModal(null)}
+      />
     </div>
   );
 }
