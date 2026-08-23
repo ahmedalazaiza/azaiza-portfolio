@@ -162,7 +162,7 @@ export default function ProjectDetailPage() {
               {project.title}
             </h1>
 
-            <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-2xl break-words">
+            <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed w-full max-w-full break-words whitespace-pre-line">
               {project.fullDescription || project.description}
             </p>
           </motion.div>
