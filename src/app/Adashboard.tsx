@@ -210,13 +210,19 @@ function MessagesTab() {
   }, []);
 
   async function loadMessages() {
-    const { data, error } = await supabase
-      .from("messages")
-      .select("*")
-      .order("created_at", { ascending: false });
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (!error) setMessages(data || []);
-    setLoading(false);
+      if (!error && data) setMessages(data);
+    } catch (err) {
+      console.error("loadMessages error:", err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function markAsRead(id: number) {
@@ -349,13 +355,18 @@ function ProjectsTab() {
 
   async function loadProjects() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("projects")
-      .select("*")
-      .order("sort_order", { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .order("sort_order", { ascending: true });
 
-    if (!error) setProjects(data || []);
-    setLoading(false);
+      if (!error && data) setProjects(data);
+    } catch (err) {
+      console.error("loadProjects error:", err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function handleStartAdd() {
@@ -945,12 +956,22 @@ function ExperiencesTab() {
 
   async function loadExperiences() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("experiences")
-      .select("*");
+    try {
+      const { data, error } = await supabase
+        .from("experiences")
+        .select("*");
 
-    if (!error) setExperiences(sortExperiences(data || []));
-    setLoading(false);
+      if (error) {
+        console.error("Supabase loadExperiences error:", error);
+      } else if (data) {
+        // Show all experiences in dashboard sorted chronologically (skip dedupe for admin)
+        setExperiences(sortExperiences(data as any, true));
+      }
+    } catch (err) {
+      console.error("Unexpected loadExperiences exception:", err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function handleStartAdd() {

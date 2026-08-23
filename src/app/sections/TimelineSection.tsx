@@ -102,8 +102,9 @@ const FALLBACK_EXPERIENCES: Experience[] = [
 ];
 
 // Helper: Calculate chronological sorting score from period string
-function getPeriodScore(period: string, isCurrent: boolean): number {
-  const isNow = isCurrent || /present|current|now|حالي|الان/i.test(period);
+function getPeriodScore(period: string = "", isCurrent: boolean = false): number {
+  const periodStr = String(period || "");
+  const isNow = isCurrent || /present|current|now|حالي|الان/i.test(periodStr);
   
   const monthsMap: Record<string, number> = {
     jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
@@ -121,24 +122,24 @@ function getPeriodScore(period: string, isCurrent: boolean): number {
   };
 
   // Find all 4-digit years in string
-  const years = period.match(/\b(20\d{2}|19\d{2})\b/g) || [];
+  const years = periodStr.match(/\b(20\d{2}|19\d{2})\b/g) || [];
 
   if (isNow) {
     // Current positions always come on top; sub-sorted by start date (newest start first)
     const startYear = years.length > 0 ? parseInt(years[0], 10) : 2024;
-    const startMonth = years.length > 0 ? getMonthNum(period, years[0]) : 1;
+    const startMonth = years.length > 0 ? getMonthNum(periodStr, years[0]) : 1;
     return 9000000000 + (startYear * 100 + startMonth);
   }
 
   if (years.length >= 2) {
     const startYear = parseInt(years[0], 10);
-    const startMonth = getMonthNum(period, years[0]);
+    const startMonth = getMonthNum(periodStr, years[0]);
     const endYear = parseInt(years[1], 10);
-    const endMonth = getMonthNum(period, years[1]);
+    const endMonth = getMonthNum(periodStr, years[1]);
     return (endYear * 100 + endMonth) * 100000 + (startYear * 100 + startMonth);
   } else if (years.length === 1) {
     const yr = parseInt(years[0], 10);
-    const mo = getMonthNum(period, years[0]);
+    const mo = getMonthNum(periodStr, years[0]);
     return (yr * 100 + mo) * 100000;
   }
 
@@ -147,18 +148,21 @@ function getPeriodScore(period: string, isCurrent: boolean): number {
 
 // Deduplicate experiences (keep richest entry if same company & role exist)
 function deduplicateExperiences(items: Experience[]): Experience[] {
+  if (!items || !Array.isArray(items)) return [];
   const map = new Map<string, Experience>();
   for (const item of items) {
-    const normCompany = item.company.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 10);
-    const normRole = item.role.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 10);
-    const key = `${normCompany}-${normRole}`;
+    if (!item) continue;
+    const normCompany = (item.company || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 10);
+    const normRole = (item.role || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 10);
+    const key = `${normCompany}-${normRole}` || `item-${item.id}`;
     
     const existing = map.get(key);
     if (!existing) {
       map.set(key, item);
     } else {
-      const existingLen = (existing.highlights || []).join(" ").length;
-      const itemLen = (item.highlights || []).join(" ").length;
+      const getLen = (h: any) => Array.isArray(h) ? h.join(" ").length : String(h || "").length;
+      const existingLen = getLen(existing.highlights);
+      const itemLen = getLen(item.highlights);
       if (itemLen >= existingLen) {
         map.set(key, item);
       }
@@ -167,19 +171,20 @@ function deduplicateExperiences(items: Experience[]): Experience[] {
   return Array.from(map.values());
 }
 
-export function sortExperiences(exps: Experience[]): Experience[] {
-  const deduped = deduplicateExperiences(exps);
-  return deduped.sort((a, b) => {
-    const isCurrentA = a.current || /present|current|now|حالي|الان/i.test(a.period);
-    const isCurrentB = b.current || /present|current|now|حالي|الان/i.test(b.period);
+export function sortExperiences(exps: Experience[], skipDedupe = false): Experience[] {
+  if (!exps || !Array.isArray(exps)) return [];
+  const list = skipDedupe ? [...exps] : deduplicateExperiences(exps);
+  return list.sort((a, b) => {
+    const isCurrentA = !!a.current || /present|current|now|حالي|الان/i.test(a.period || "");
+    const isCurrentB = !!b.current || /present|current|now|حالي|الان/i.test(b.period || "");
 
     // 1. Current positions always first
     if (isCurrentA && !isCurrentB) return -1;
     if (!isCurrentA && isCurrentB) return 1;
 
     // 2. Chronological score comparison
-    const scoreA = getPeriodScore(a.period, isCurrentA);
-    const scoreB = getPeriodScore(b.period, isCurrentB);
+    const scoreA = getPeriodScore(a.period || "", isCurrentA);
+    const scoreB = getPeriodScore(b.period || "", isCurrentB);
 
     if (scoreA !== scoreB) {
       return scoreB - scoreA; // descending (newest first)
