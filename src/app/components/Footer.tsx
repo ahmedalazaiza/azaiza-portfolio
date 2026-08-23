@@ -1,6 +1,54 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router";
-import { Mail, Phone, MapPin, ExternalLink, Sparkles, Heart } from "lucide-react";
+import { Mail, Phone, MapPin, ExternalLink, Sparkles, Linkedin, Instagram } from "lucide-react";
+
+function FigmaIcon({ size = 17, className = "" }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+      <path d="M8 24C10.2091 24 12 22.2091 12 20V16H8C5.79086 16 4 17.7909 4 20C4 22.2091 5.79086 24 8 24Z" fill="#0ACF83"/>
+      <path d="M4 12C4 9.79086 5.79086 8 8 8H12V16H8C5.79086 16 4 14.2091 4 12Z" fill="#A259FF"/>
+      <path d="M4 4C4 1.79086 5.79086 0 8 0H12V8H8C5.79086 8 4 6.20914 4 4Z" fill="#F24E1E"/>
+      <path d="M12 0H16C18.2091 0 20 1.79086 20 4C20 6.20914 18.2091 8 16 8H12V0Z" fill="#FF7262"/>
+      <path d="M20 12C20 14.2091 18.2091 16 16 16C13.7909 16 12 14.2091 12 12C12 9.79086 13.7909 8 16 8C18.2091 8 20 9.79086 20 12Z" fill="#1ABCFE"/>
+    </svg>
+  );
+}
+
+const SOCIAL_LINKS = [
+  {
+    name: "LinkedIn",
+    icon: (
+      <Linkedin
+        size={18}
+        className="text-[#0A66C2] group-hover:scale-110 transition-transform"
+      />
+    ),
+    href: "https://www.linkedin.com/in/ahmedalazaiza/",
+    label: "Professional Profile",
+  },
+  {
+    name: "Instagram",
+    icon: (
+      <Instagram
+        size={18}
+        className="text-[#E1306C] group-hover:scale-110 transition-transform"
+      />
+    ),
+    href: "https://www.instagram.com/ahmed.azaiza/",
+    label: "Design Journey",
+  },
+  {
+    name: "Figma",
+    icon: (
+      <FigmaIcon
+        size={18}
+        className="group-hover:scale-110 transition-transform"
+      />
+    ),
+    href: "https://www.figma.com/@ahmedalazaiza",
+    label: "Community & Systems",
+  },
+];
 
 export default function Footer() {
   const location = useLocation();
@@ -46,9 +94,32 @@ export default function Footer() {
             <p className="text-sm text-muted-foreground max-w-sm leading-relaxed">
               Strategic Senior UX/UI Designer with 8+ years of experience turning complex challenges into simple, meaningful, and purposeful digital products.
             </p>
+
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-mono text-primary">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               Available for Global Projects & Consulting
+            </div>
+
+            {/* Social Media Links in Brand Col */}
+            <div className="pt-2">
+              <div className="text-xs font-mono text-muted-foreground uppercase tracking-wider mb-2.5">
+                Social Profiles
+              </div>
+              <div className="flex items-center gap-2.5">
+                {SOCIAL_LINKS.map((item) => (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 rounded-xl bg-card border border-border flex items-center justify-center hover:border-primary/50 hover:bg-primary/5 hover:scale-105 active:scale-95 transition-all duration-200 group shadow-sm"
+                    title={`${item.name} — ${item.label}`}
+                    aria-label={item.name}
+                  >
+                    {item.icon}
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -117,13 +188,30 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom copyright line */}
+        {/* Bottom copyright & Socials line */}
         <div className="pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <p>© {new Date().getFullYear()} Ahmed M. Y. Al-Azaiza · All rights reserved.</p>
-          <p className="flex items-center gap-1.5 font-medium">
-            <span>Designed & crafted with precision</span>
-            <Sparkles size={13} className="text-primary" />
-          </p>
+
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              {SOCIAL_LINKS.map((item) => (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-primary transition-colors flex items-center gap-1.5 font-medium"
+                >
+                  <span>{item.name}</span>
+                </a>
+              ))}
+            </div>
+            <span className="text-border">|</span>
+            <p className="flex items-center gap-1.5 font-medium">
+              <span>Crafted with precision</span>
+              <Sparkles size={13} className="text-primary" />
+            </p>
+          </div>
         </div>
       </div>
     </footer>

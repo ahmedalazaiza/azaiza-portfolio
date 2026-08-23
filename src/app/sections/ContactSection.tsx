@@ -94,16 +94,64 @@ export default function ContactSection() {
               ))}
             </div>
 
-            <div className="mt-8 flex items-center gap-4">
-              <a
-                href="https://www.upwork.com/freelancers/~0164cb29425e741b93"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2.5 px-6 py-3 rounded-2xl border border-border bg-card text-sm text-foreground hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all duration-200 font-semibold group shadow-sm"
-              >
-                <ExternalLink size={15} className="text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                <span>Upwork</span>
-              </a>
+            {/* Social & Upwork Links */}
+            <div className="mt-8 pt-6 border-t border-border/60">
+              <div className="text-xs font-mono text-muted-foreground uppercase tracking-wider mb-3">
+                Connect on Social & Platforms
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <a
+                  href="https://www.linkedin.com/in/ahmedalazaiza/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-card text-xs font-semibold text-foreground hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all duration-200 group shadow-sm"
+                >
+                  <svg className="w-4 h-4 text-[#0A66C2] fill-current" viewBox="0 0 24 24">
+                    <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
+                  </svg>
+                  <span>LinkedIn</span>
+                </a>
+
+                <a
+                  href="https://www.instagram.com/ahmed.azaiza/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-card text-xs font-semibold text-foreground hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all duration-200 group shadow-sm"
+                >
+                  <svg className="w-4 h-4 text-[#E1306C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                  </svg>
+                  <span>Instagram</span>
+                </a>
+
+                <a
+                  href="https://www.figma.com/@ahmedalazaiza"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-card text-xs font-semibold text-foreground hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all duration-200 group shadow-sm"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M8 24C10.2091 24 12 22.2091 12 20V16H8C5.79086 16 4 17.7909 4 20C4 22.2091 5.79086 24 8 24Z" fill="#0ACF83"/>
+                    <path d="M4 12C4 9.79086 5.79086 8 8 8H12V16H8C5.79086 16 4 14.2091 4 12Z" fill="#A259FF"/>
+                    <path d="M4 4C4 1.79086 5.79086 0 8 0H12V8H8C5.79086 8 4 6.20914 4 4Z" fill="#F24E1E"/>
+                    <path d="M12 0H16C18.2091 0 20 1.79086 20 4C20 6.20914 18.2091 8 16 8H12V0Z" fill="#FF7262"/>
+                    <path d="M20 12C20 14.2091 18.2091 16 16 16C13.7909 16 12 14.2091 12 12C12 9.79086 13.7909 8 16 8C18.2091 8 20 9.79086 20 12Z" fill="#1ABCFE"/>
+                  </svg>
+                  <span>Figma</span>
+                </a>
+
+                <a
+                  href="https://www.upwork.com/freelancers/~0164cb29425e741b93"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-card text-xs font-semibold text-foreground hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all duration-200 group shadow-sm"
+                >
+                  <ExternalLink size={13} className="text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  <span>Upwork</span>
+                </a>
+              </div>
             </div>
           </motion.div>
 
