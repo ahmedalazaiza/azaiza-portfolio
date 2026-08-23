@@ -80,24 +80,26 @@ export default function Lightbox({
           className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col justify-between select-none"
         >
           {/* Top Bar */}
-          <div className="flex items-center justify-between px-6 py-4 z-10 bg-gradient-to-b from-black/80 to-transparent">
-            <div className="flex items-center gap-3">
-              <span className="text-white text-sm font-semibold truncate max-w-xs sm:max-w-md">
+          <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 z-10 bg-gradient-to-b from-black/85 via-black/50 to-transparent">
+            {/* Title & Counter */}
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 mr-2">
+              <span className="text-white text-xs sm:text-sm font-semibold truncate max-w-[130px] sm:max-w-xs md:max-w-md">
                 {projectTitle}
               </span>
-              <span className="text-white/60 text-xs font-mono px-2 py-0.5 rounded-full bg-white/10">
+              <span className="shrink-0 whitespace-nowrap text-white/90 text-[11px] sm:text-xs font-mono font-medium px-2.5 py-0.5 rounded-full bg-white/15 border border-white/10">
                 {currentIndex + 1} / {images.length}
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* Action Buttons */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <button
                 onClick={() => setIsZoomed(!isZoomed)}
                 aria-label={isZoomed ? "Zoom out" : "Zoom in"}
-                className="w-10 h-10 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-colors"
                 title={isZoomed ? "Zoom out" : "Zoom in"}
               >
-                {isZoomed ? <ZoomOut size={18} /> : <ZoomIn size={18} />}
+                {isZoomed ? <ZoomOut size={17} /> : <ZoomIn size={17} />}
               </button>
 
               <a
@@ -105,25 +107,25 @@ export default function Lightbox({
                 target="_blank"
                 rel="noopener noreferrer"
                 download
-                className="w-10 h-10 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-                title="Open in new tab / download"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                title="Open original image"
               >
-                <Download size={18} />
+                <Download size={17} />
               </a>
 
               <button
                 onClick={onClose}
                 aria-label="Close Lightbox"
-                className="w-10 h-10 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 text-white transition-colors ml-2"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-white/15 hover:bg-white/25 text-white transition-colors ml-1"
                 title="Close (Esc)"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
           </div>
 
           {/* Main Image Stage */}
-          <div className="relative flex-1 flex items-center justify-center p-4 sm:p-8 overflow-hidden">
+          <div className="relative flex-1 flex items-center justify-center p-3 sm:p-8 overflow-hidden">
             {/* Previous Button */}
             {images.length > 1 && (
               <button
@@ -132,9 +134,9 @@ export default function Lightbox({
                   handlePrev();
                 }}
                 aria-label="Previous Image"
-                className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg"
+                className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/50 hover:bg-black/80 sm:bg-white/10 sm:hover:bg-white/20 text-white flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg backdrop-blur-sm"
               >
-                <ChevronLeft size={24} />
+                <ChevronLeft size={20} className="sm:size-6" />
               </button>
             )}
 
