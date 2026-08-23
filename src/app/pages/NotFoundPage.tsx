@@ -93,8 +93,20 @@ export default function NotFoundPage() {
           }}
           className="relative select-none my-2 transition-transform duration-100 ease-out"
         >
-          <h1 className="text-8xl sm:text-9xl md:text-[12rem] font-display font-black tracking-tight leading-none text-transparent bg-clip-text bg-gradient-to-b from-foreground via-foreground/80 to-foreground/20">
-            4<span className="text-primary inline-block hover:scale-110 transition-transform duration-300">0</span>4
+          <h1 className="text-8xl sm:text-9xl md:text-[12rem] font-display font-black tracking-tight leading-none flex items-center justify-center gap-0 select-none">
+            <span className="text-transparent bg-clip-text bg-gradient-to-b from-foreground via-foreground/80 to-foreground/30">
+              4
+            </span>
+            <motion.span
+              whileHover={{ scale: 1.08, rotate: 6 }}
+              transition={{ type: "spring", stiffness: 350, damping: 15 }}
+              className="text-primary inline-block cursor-pointer drop-shadow-[0_0_30px_rgba(170,255,56,0.35)]"
+            >
+              0
+            </motion.span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-b from-foreground via-foreground/80 to-foreground/30">
+              4
+            </span>
           </h1>
           <div className="absolute inset-0 bg-primary/10 blur-3xl -z-10 rounded-full" />
         </motion.div>
