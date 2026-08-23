@@ -935,20 +935,136 @@ function ProjectsTab() {
 }
 
 // ─── Experiences Tab ─────────────────────────────────────────────────────────
+const SHORT_MONTHS = [
+  { value: "", label: "Year only" },
+  { value: "Jan", label: "Jan (January)" },
+  { value: "Feb", label: "Feb (February)" },
+  { value: "Mar", label: "Mar (March)" },
+  { value: "Apr", label: "Apr (April)" },
+  { value: "May", label: "May (May)" },
+  { value: "Jun", label: "Jun (June)" },
+  { value: "Jul", label: "Jul (July)" },
+  { value: "Aug", label: "Aug (August)" },
+  { value: "Sep", label: "Sep (September)" },
+  { value: "Oct", label: "Oct (October)" },
+  { value: "Nov", label: "Nov (November)" },
+  { value: "Dec", label: "Dec (December)" },
+];
+
+const THIS_YEAR = new Date().getFullYear();
+const YEAR_LIST = Array.from({ length: 18 }, (_, i) => String(THIS_YEAR + 1 - i));
+
+interface SmartExperienceForm {
+  role: string;
+  company: string;
+  location: string;
+  isCurrent: boolean;
+  startMonth: string;
+  startYear: string;
+  endMonth: string;
+  endYear: string;
+  customPeriodMode: boolean;
+  customPeriod: string;
+  highlightsList: string[];
+}
+
+function parseExperienceToForm(exp?: any): SmartExperienceForm {
+  if (!exp) {
+    return {
+      role: "",
+      company: "",
+      location: "",
+      isCurrent: true,
+      startMonth: "Jan",
+      startYear: String(THIS_YEAR),
+      endMonth: "",
+      endYear: String(THIS_YEAR),
+      customPeriodMode: false,
+      customPeriod: "",
+      highlightsList: [""],
+    };
+  }
+
+  const periodStr = exp.period || "";
+  const isCurrent = !!exp.current || /present|current|now|حالي|الان/i.test(periodStr);
+  const years = periodStr.match(/\b(20\d{2}|19\d{2})\b/g) || [];
+  const startYear = years[0] || String(THIS_YEAR);
+  const endYear = isCurrent ? "" : (years[1] || startYear);
+
+  let startMonth = "";
+  let endMonth = "";
+
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  for (const m of monthNames) {
+    if (new RegExp(`${m}\\w*\\s*${years[0]}`, "i").test(periodStr)) {
+      startMonth = m;
+      break;
+    }
+  }
+
+  if (!isCurrent && years.length >= 2) {
+    for (const m of monthNames) {
+      if (new RegExp(`${m}\\w*\\s*${years[1]}`, "i").test(periodStr)) {
+        endMonth = m;
+        break;
+      }
+    }
+  }
+
+  let highlightsList: string[] = [];
+  if (Array.isArray(exp.highlights)) {
+    highlightsList = exp.highlights.map((h: any) => String(h).trim()).filter(Boolean);
+  } else if (typeof exp.highlights === "string") {
+    highlightsList = exp.highlights.includes("|")
+      ? exp.highlights.split("|").map((h: string) => h.trim()).filter(Boolean)
+      : exp.highlights.split("\n").map((h: string) => h.trim()).filter(Boolean);
+  }
+
+  if (highlightsList.length === 0) {
+    highlightsList = [""];
+  }
+
+  return {
+    role: exp.role || "",
+    company: exp.company || "",
+    location: exp.location || "",
+    isCurrent,
+    startMonth,
+    startYear,
+    endMonth,
+    endYear,
+    customPeriodMode: false,
+    customPeriod: periodStr,
+    highlightsList,
+  };
+}
+
+function computePeriodPreview(form: SmartExperienceForm): string {
+  if (form.customPeriodMode && form.customPeriod.trim()) {
+    return form.customPeriod.trim();
+  }
+
+  const startPart = form.startMonth
+    ? `${form.startMonth} ${form.startYear || THIS_YEAR}`
+    : `${form.startYear || THIS_YEAR}`;
+
+  if (form.isCurrent) {
+    return `${startPart} – Present`;
+  }
+
+  const endPart = form.endMonth
+    ? `${form.endMonth} ${form.endYear || form.startYear || THIS_YEAR}`
+    : `${form.endYear || form.startYear || THIS_YEAR}`;
+
+  return `${startPart} – ${endPart}`;
+}
+
 function ExperiencesTab() {
   const [experiences, setExperiences] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [form, setForm] = useState({
-    period: "",
-    role: "",
-    company: "",
-    location: "",
-    current: false,
-    highlights: "",
-    sort_order: 1,
-  });
+  const [form, setForm] = useState<SmartExperienceForm>(parseExperienceToForm());
 
   useEffect(() => {
     loadExperiences();
@@ -976,29 +1092,13 @@ function ExperiencesTab() {
 
   function handleStartAdd() {
     setEditingId(null);
-    setForm({
-      period: "",
-      role: "",
-      company: "",
-      location: "",
-      current: false,
-      highlights: "",
-      sort_order: experiences.length + 1,
-    });
+    setForm(parseExperienceToForm());
     setShowForm(true);
   }
 
   function handleStartEdit(exp: any) {
     setEditingId(exp.id);
-    setForm({
-      period: exp.period || "",
-      role: exp.role || "",
-      company: exp.company || "",
-      location: exp.location || "",
-      current: exp.current || false,
-      highlights: exp.highlights || "",
-      sort_order: exp.sort_order || 1,
-    });
+    setForm(parseExperienceToForm(exp));
     setShowForm(true);
   }
 
@@ -1018,17 +1118,45 @@ function ExperiencesTab() {
     loadExperiences();
   }
 
+  const handleAddHighlight = () => {
+    setForm((prev) => ({
+      ...prev,
+      highlightsList: [...prev.highlightsList, ""],
+    }));
+  };
+
+  const handleUpdateHighlight = (index: number, value: string) => {
+    setForm((prev) => {
+      const updated = [...prev.highlightsList];
+      updated[index] = value;
+      return { ...prev, highlightsList: updated };
+    });
+  };
+
+  const handleRemoveHighlight = (index: number) => {
+    setForm((prev) => {
+      const updated = prev.highlightsList.filter((_, i) => i !== index);
+      return { ...prev, highlightsList: updated.length > 0 ? updated : [""] };
+    });
+  };
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    const periodCalculated = computePeriodPreview(form);
+    const cleanHighlights = form.highlightsList
+      .map((h) => h.trim())
+      .filter(Boolean)
+      .join(" | ");
+
     const payload = {
-      period: form.period,
-      role: form.role,
-      company: form.company,
-      location: form.location,
-      current: form.current,
-      highlights: form.highlights,
-      sort_order: form.sort_order,
+      period: periodCalculated,
+      role: form.role.trim(),
+      company: form.company.trim(),
+      location: form.location.trim(),
+      current: form.isCurrent,
+      highlights: cleanHighlights,
+      sort_order: form.isCurrent ? 0 : 1,
     };
 
     if (editingId) {
@@ -1047,24 +1175,24 @@ function ExperiencesTab() {
 
     setShowForm(false);
     setEditingId(null);
-    setForm({
-      period: "",
-      role: "",
-      company: "",
-      location: "",
-      current: false,
-      highlights: "",
-      sort_order: 1,
-    });
+    setForm(parseExperienceToForm());
     loadExperiences();
   }
+
+  const generatedPeriod = computePeriodPreview(form);
 
   if (loading) return <p className="text-muted-foreground">Loading experiences...</p>;
 
   return (
     <div>
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold">Experience ({experiences.length})</h2>
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Work Experience ({experiences.length})</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Auto-sorted chronologically from newest to oldest. Current positions appear on top.
+          </p>
+        </div>
         <button
           onClick={() => {
             if (showForm) {
@@ -1074,7 +1202,7 @@ function ExperiencesTab() {
               handleStartAdd();
             }
           }}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition shadow-sm"
         >
           {showForm ? "Cancel" : <><Plus size={16} /> Add Experience</>}
         </button>
@@ -1082,31 +1210,37 @@ function ExperiencesTab() {
 
       {/* Add / Edit Form */}
       {showForm && (
-        <form onSubmit={handleSubmit} className="mb-8 p-6 rounded-2xl border border-border bg-card space-y-4 shadow-sm">
-          <div className="flex items-center justify-between pb-3 border-b border-border">
-            <h3 className="font-semibold text-foreground text-base">
-              {editingId ? "Edit Experience" : "Add New Experience"}
-            </h3>
-            {editingId && (
-              <span className="text-xs font-mono text-primary bg-primary/10 px-2 py-0.5 rounded-md">
-                ID #{editingId}
+        <form onSubmit={handleSubmit} className="mb-8 p-6 sm:p-7 rounded-3xl border border-border bg-card space-y-6 shadow-md">
+          {/* Header Bar */}
+          <div className="flex flex-wrap items-center justify-between pb-4 border-b border-border gap-3">
+            <div>
+              <h3 className="font-display font-bold text-foreground text-lg">
+                {editingId ? "Edit Experience" : "Add New Experience"}
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Dates and roles are automatically calculated and placed in the right timeline order.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-mono px-3 py-1 rounded-full font-semibold ${
+                form.isCurrent ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+              }`}>
+                {form.isCurrent ? "Active (Current Role)" : "Past Role"}
               </span>
-            )}
+              {editingId && (
+                <span className="text-xs font-mono text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-full">
+                  ID #{editingId}
+                </span>
+              )}
+            </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
+          {/* Core Info */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Period *</label>
-              <input
-                required
-                placeholder="Oct 2023 – Present"
-                value={form.period}
-                onChange={(e) => setForm({ ...form, period: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Role / Job Title *</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                Job Title / Role *
+              </label>
               <input
                 required
                 placeholder="Senior UX/UI Designer"
@@ -1116,7 +1250,9 @@ function ExperiencesTab() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Company *</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                Company / Organization *
+              </label>
               <input
                 required
                 placeholder="HAD For Communications & IT"
@@ -1126,56 +1262,188 @@ function ExperiencesTab() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Location</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                Location & Workplace
+              </label>
               <input
-                placeholder="Riyadh, Saudi Arabia · Remote"
+                placeholder="Riyadh, SA · Remote"
                 value={form.location}
                 onChange={(e) => setForm({ ...form, location: e.target.value })}
                 className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Sort Order</label>
-              <input
-                type="number"
-                placeholder="1"
-                value={form.sort_order}
-                onChange={(e) => setForm({ ...form, sort_order: Number(e.target.value) })}
-                className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div className="flex items-end pb-2">
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
+          </div>
+
+          {/* ─── SMART DATE SELECTION & PERIOD CALCULATOR ──────────────────────── */}
+          <div className="p-5 rounded-2xl border border-border bg-muted/20 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Clock size={16} className="text-primary" />
+                  Timeline Period & Dates
+                </h4>
+                <p className="text-xs text-muted-foreground">Select start and end dates to calculate chronological order</p>
+              </div>
+
+              {/* Current Job Toggle */}
+              <label className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-card border border-border cursor-pointer hover:border-primary/40 transition">
                 <input
                   type="checkbox"
-                  checked={form.current}
-                  onChange={(e) => setForm({ ...form, current: e.target.checked })}
-                  className="rounded border-border"
+                  checked={form.isCurrent}
+                  onChange={(e) => setForm({ ...form, isCurrent: e.target.checked })}
+                  className="w-4 h-4 rounded text-primary border-border focus:ring-primary"
                 />
-                <span className="font-medium text-foreground">Current Position</span>
+                <span className="text-xs font-medium text-foreground">
+                  I currently work here (Present)
+                </span>
               </label>
+            </div>
+
+            {/* Date Dropdowns Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Start Date */}
+              <div className="p-4 rounded-xl border border-border bg-card/60 space-y-2">
+                <label className="block text-xs font-semibold text-foreground">Start Date *</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    value={form.startMonth}
+                    onChange={(e) => setForm({ ...form, startMonth: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-xs focus:ring-2 focus:ring-primary"
+                  >
+                    {SHORT_MONTHS.map((m) => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={form.startYear}
+                    onChange={(e) => setForm({ ...form, startYear: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-xs focus:ring-2 focus:ring-primary"
+                  >
+                    {YEAR_LIST.map((y) => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* End Date */}
+              <div className={`p-4 rounded-xl border border-border bg-card/60 space-y-2 transition-opacity ${
+                form.isCurrent ? "opacity-40 pointer-events-none" : "opacity-100"
+              }`}>
+                <label className="block text-xs font-semibold text-foreground">
+                  {form.isCurrent ? "End Date (Set to Present)" : "End Date *"}
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    disabled={form.isCurrent}
+                    value={form.endMonth}
+                    onChange={(e) => setForm({ ...form, endMonth: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-xs focus:ring-2 focus:ring-primary disabled:opacity-50"
+                  >
+                    {SHORT_MONTHS.map((m) => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
+                  </select>
+                  <select
+                    disabled={form.isCurrent}
+                    value={form.endYear}
+                    onChange={(e) => setForm({ ...form, endYear: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-xs focus:ring-2 focus:ring-primary disabled:opacity-50"
+                  >
+                    {YEAR_LIST.map((y) => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Live Period Preview Badge */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border/60">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground font-medium">Generated Period:</span>
+                <span className="text-xs font-mono text-primary font-bold bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
+                  {generatedPeriod}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, customPeriodMode: !form.customPeriodMode })}
+                className="text-xs text-muted-foreground hover:text-primary transition underline"
+              >
+                {form.customPeriodMode ? "Use automatic date calculator" : "Edit custom text period"}
+              </button>
+            </div>
+
+            {/* Custom text override */}
+            {form.customPeriodMode && (
+              <div className="pt-2">
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  Custom Period String (Overrides auto calculator)
+                </label>
+                <input
+                  placeholder="e.g. 4-Days Bootcamp · Aug 2023"
+                  value={form.customPeriod}
+                  onChange={(e) => setForm({ ...form, customPeriod: e.target.value })}
+                  className="w-full px-4 py-2 rounded-xl border border-border bg-background text-foreground text-sm focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* ─── INTERACTIVE RESPONSIBILITIES & HIGHLIGHTS BUILDER ─────────────── */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="block text-xs font-semibold text-foreground">
+                  Key Responsibilities & Achievements ({form.highlightsList.filter(Boolean).length})
+                </label>
+                <p className="text-xs text-muted-foreground">Add clear bullet points that highlight your impact in this role</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddHighlight}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:border-primary/40 hover:text-primary text-xs font-medium transition"
+              >
+                <Plus size={13} /> Add Point
+              </button>
+            </div>
+
+            <div className="space-y-2.5">
+              {form.highlightsList.map((highlight, index) => (
+                <div key={index} className="flex items-start gap-2">
+                  <span className="px-2.5 py-2 rounded-lg bg-muted text-muted-foreground font-mono text-xs font-semibold shrink-0 mt-0.5">
+                    #{index + 1}
+                  </span>
+                  <textarea
+                    rows={2}
+                    placeholder={`e.g. Lead end-to-end UX/UI design for web portals...`}
+                    value={highlight}
+                    onChange={(e) => handleUpdateHighlight(index, e.target.value)}
+                    className="flex-1 px-4 py-2 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary leading-relaxed"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveHighlight(index)}
+                    disabled={form.highlightsList.length === 1 && !highlight}
+                    className="p-2 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition mt-1 disabled:opacity-30"
+                    title="Remove point"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1">
-              Highlights (separate each bullet with | )
-            </label>
-            <textarea
-              placeholder="Lead end-to-end design | Scaled design system | Mentored team"
-              value={form.highlights}
-              onChange={(e) => setForm({ ...form, highlights: e.target.value })}
-              rows={4}
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          <div className="flex items-center gap-4 pt-2">
+          {/* Submit / Cancel Buttons */}
+          <div className="flex items-center gap-4 pt-4 border-t border-border">
             <button
               type="submit"
-              className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition shadow-sm"
+              className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground font-bold hover:opacity-90 transition shadow-sm text-sm"
             >
-              {editingId ? "Update Experience" : "Save Experience"}
+              {editingId ? "Update Experience" : "Save Experience to Timeline"}
             </button>
             <button
               type="button"
@@ -1183,7 +1451,7 @@ function ExperiencesTab() {
                 setShowForm(false);
                 setEditingId(null);
               }}
-              className="px-6 py-3 rounded-xl border border-border text-foreground font-medium hover:bg-muted/50 transition"
+              className="px-6 py-3 rounded-xl border border-border text-foreground font-medium hover:bg-muted/50 transition text-sm"
             >
               Cancel
             </button>
@@ -1193,60 +1461,75 @@ function ExperiencesTab() {
 
       {/* Experiences List */}
       {experiences.length === 0 ? (
-        <div className="text-center py-12 border border-dashed border-border rounded-2xl">
+        <div className="text-center py-12 border border-dashed border-border rounded-3xl">
           <p className="text-muted-foreground mb-3">No experiences added yet.</p>
           <button
             onClick={handleStartAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-sm"
           >
             <Plus size={16} /> Add your first experience
           </button>
         </div>
       ) : (
         <div className="space-y-3">
-          {experiences.map((exp) => (
-            <div
-              key={exp.id}
-              className="flex items-start gap-4 p-4 rounded-2xl border border-border bg-card hover:border-primary/30 transition-colors"
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <span className="text-xs font-mono text-primary bg-primary/10 px-2 py-0.5 rounded-full font-medium">
-                    {exp.period}
-                  </span>
-                  {exp.current && (
-                    <span className="text-xs font-mono text-primary border border-primary/30 px-2 py-0.5 rounded-full font-medium">
-                      Current
-                    </span>
-                  )}
-                </div>
-                <h3 className="font-semibold text-foreground">{exp.role}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {exp.company} · {exp.location}
-                </p>
-              </div>
+          {experiences.map((exp, idx) => {
+            const isCurrent = exp.current || /present|current|now|حالي|الان/i.test(exp.period || "");
+            const bulletCount = Array.isArray(exp.highlights)
+              ? exp.highlights.length
+              : (exp.highlights ? exp.highlights.split("|").filter(Boolean).length : 0);
 
-              <div className="flex items-center gap-1.5 shrink-0 mt-1">
-                <button
-                  onClick={() => handleStartEdit(exp)}
-                  className="p-2 rounded-lg hover:bg-primary/10 text-primary transition"
-                  title="Edit experience"
-                >
-                  <Pencil size={16} />
-                </button>
-                <button
-                  onClick={() => setDeleteModal({ id: exp.id, title: `${exp.role} · ${exp.company}` })}
-                  className="p-2 rounded-lg hover:bg-red-500/10 text-red-500 transition"
-                  title="Delete experience"
-                >
-                  <Trash2 size={16} />
-                </button>
+            return (
+              <div
+                key={exp.id}
+                className="flex items-start gap-4 p-5 rounded-2xl border border-border bg-card hover:border-primary/40 transition-all shadow-sm"
+              >
+                <div className="w-8 h-8 rounded-full bg-muted/60 text-muted-foreground font-mono text-xs flex items-center justify-center shrink-0 font-bold mt-0.5">
+                  {idx + 1}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <span className="text-xs font-mono text-primary bg-primary/10 px-2.5 py-0.5 rounded-full font-semibold border border-primary/20">
+                      {exp.period}
+                    </span>
+                    {isCurrent && (
+                      <span className="text-xs font-mono text-primary font-bold border border-primary/40 px-2 py-0.5 rounded-full">
+                        ● Current
+                      </span>
+                    )}
+                    <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                      {bulletCount} points
+                    </span>
+                  </div>
+                  <h3 className="font-display font-bold text-foreground text-base">{exp.role}</h3>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {exp.company} {exp.location ? `· ${exp.location}` : ""}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0 mt-1">
+                  <button
+                    onClick={() => handleStartEdit(exp)}
+                    className="p-2 rounded-lg hover:bg-primary/10 text-primary transition"
+                    title="Edit experience"
+                  >
+                    <Pencil size={16} />
+                  </button>
+                  <button
+                    onClick={() => setDeleteModal({ id: exp.id, title: `${exp.role} · ${exp.company}` })}
+                    className="p-2 rounded-lg hover:bg-red-500/10 text-red-500 transition"
+                    title="Delete experience"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
+      {/* Confirm Delete Modal */}
       <ConfirmModal
         isOpen={!!deleteModal}
         title="Delete Experience"
