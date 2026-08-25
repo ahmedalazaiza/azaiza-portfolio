@@ -9,6 +9,7 @@ import HomePage from "./pages/HomePage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import DashboardPage from "./pages/DashboardPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import { Analytics } from "@vercel/analytics/next"
 
 export const API_BASE: string =
   (import.meta as any).env?.VITE_API_URL ?? "https://api.yourdomain.com";
@@ -66,6 +67,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AppContent isDark={isDark} onToggleTheme={toggleTheme} />
+      <Analytics />
     </BrowserRouter>
   );
 }
